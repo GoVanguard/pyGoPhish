@@ -5,13 +5,16 @@ from dateutil import tz, parser
 from datetime import datetime, timedelta
 from pondering.authhelper import getSignInFlow, getTokenFromCode, storeUser, removeUserAndToken, getToken
 from pondering.graphhelper import getUser
+import os.path
 
 def root(request):
     return redirect('http://localhost:8000/home')
 
+
 def home(request):
     context = initializeContext(request)
     return render(request, 'pondering/home.html', context)
+
 
 def initializeContext(request):
     context = {}
@@ -23,6 +26,7 @@ def initializeContext(request):
     # Check for user in the session
     context['user'] = request.session.get('user', {'is_authenticated': False})
     return context
+
 
 def signIn(request):
     # Get the sign-in flow
@@ -37,7 +41,18 @@ def signIn(request):
 
 def goPhishing(request):
     context = initializeContext(request)
-    return render(request, 'pondering/gophish.html', context)
+    if request.method == 'GET':
+        return render(request, 'pondering/gophish.html', context=context)
+    elif request.method == 'POST':
+        context = request.POST
+        validatePhishing(context)
+        return render(request, 'pondering/gophish.html', context=context)
+
+
+def validatePhishing(context):
+    print(context)
+    pass
+
 
 def callback(request):
     # Make the token request
@@ -47,6 +62,7 @@ def callback(request):
     # Store user
     storeUser(request, user)
     return HttpResponseRedirect(reverse('home'))
+
 
 def signOut(request):
     # Delete the user and token
