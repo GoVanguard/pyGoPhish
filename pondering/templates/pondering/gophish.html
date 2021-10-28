@@ -44,7 +44,8 @@
     }
 
     function setup() {
-        const cDate = new Date();
+        var cDate = new Date();
+        cDate = new Date(cDate.getTime() + 5*60000);
         time = convertDateTime(cDate);
         document.getElementById("datetime").value = time;
     }
@@ -73,47 +74,33 @@
                 uPrompt.disabled = true;
             }
         }
-        else if(domain && validateSchedule(uDateTime.value)) {
-            uPrompt.value = "Schedule";
-            uDateTime.type = "datetime-local";
-            if(validateDomain(domain)) {
-                userPrompt.innnerHTML = "Immediately? The boat awaits!";
-                uPrompt.disabled = false;
-	    }
-            else {
-                userPrompt.innerHTML = "This is not a valid domain.";
-                uPrompt.disabled = true;
-            }
-        }
-        else {
-            uPrompt.value = "Schedule";
-            uDateTime.type = "datetime-local";
-            userPrompt.innerHTML = "When would you like to go phishing?";
-            if(validateSchedule(uDateTime)) {
-                uPrompt.disabled = false;
-            }
-            else {
-                uPrompt.disabled = true;
+	else {
+            if(domain && validateSchedule(uDateTime.value)) {
+                uPrompt.value = "Schedule";
+                uDateTime.type = "datetime-local";
+                if(validateDomain(domain)) {
+                    console.log("valid");
+                    userPrompt.innerHTML = "Let's schedule the trip.";
+                    uPrompt.disabled = false;
+                }
+                else {
+                    userPrompt.innerHTML = "This is not a valid domain.";
+                    uPrompt.disabled = true;
+                }
             }
         }
     }
 
     function validateDomain(domain) {
-        if(/^[a-z0-9]+([-.][a-z0-9]+)*\.[a-z]{2,}$/i.test(domain)) {
-            result = ping.ping("http://www." + domain,(err, data) => {
-                if (err) {
-                    console.log("error loading resource", err);
-                }
-            });
-        if(result.then((state) => {
-           document.getElementById("lag").innerHTML = state + " ms"; 
-        })) { 
-            return true;
-        }
-        else {
-            return false;
-        }
-        }
+        validate = /^[a-z0-9]+([-.][a-z0-9]+)*\.[a-z]{2,}$/i.test(domain)
+        result = ping.ping("http://www." + domain,(err, data) => {
+            if (err) {
+                console.log("error loading resource", err);
+            }});
+            result.then((state) => {
+                document.getElementById("lag").innerHTML = state + " ms"; 
+            })
+        return validate;
     }
 
     function validateSchedule(uDateTime) {
