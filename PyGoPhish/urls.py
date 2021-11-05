@@ -19,5 +19,6 @@ from pondering import views
 
 urlpatterns = [
     path('', include('pondering.urls')),
-    path('admin/', admin.site.urls),
+    path('microsoft/', include('microsoft_auth.urls', namespace='microsoft')),
+    path('accounts/login/', admin.site.urls),
 ]

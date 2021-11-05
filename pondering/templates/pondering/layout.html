@@ -31,7 +31,10 @@
             </li>
             {% if user.is_authenticated %}
               <li class="nav-item" data-turbolinks="false">
-                <a class="nav-link{% if request.resolver_match.view_name == 'goPhishing' %} active{% endif %}" href="{% url 'gophish' %}">GoPhish</a>
+                <a class="nav-link{% if request.resolver_match.view_name == 'gophish' %} active{% endif %}" href="{% url 'gophish' %}">GoPhish</a>
+              </li>
+	      <li class="nav-item" data-turbolinks="false">
+                <a class="nav-link{% if request.resolver_match.view_name == 'schedule' %} active{% endif %}" href="{% url 'schedule' %}">Schedule</a>
               </li>
             {% endif %}
           </ul>

@@ -11,4 +11,6 @@ urlpatterns = [
     path('domain', views.home, name='domain'),
     path('callback', views.callback, name='callback'),
     path('gophish', views.goPhishing, name='gophish'),
+    path('schedule', views.PhishingTripListView.as_view(), name='schedule'),
+    path('schedule/<slug:pk>', views.PhishingTripDetailView.as_view(), name='schedule-detail'),
 ]

@@ -1,13 +1,20 @@
-from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpResponseRedirect
-from django.urls import reverse
+import logging
 from dateutil import tz, parser
 from datetime import datetime, timedelta
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
+from django.shortcuts import render, redirect
+from django.views import generic
+from .models import Domain, PhishingTrip, PhishingTripInstance
 from pondering.authhelper import getSignInFlow, getTokenFromCode, storeUser, removeUserAndToken, getToken
 from pondering.graphhelper import getUser
-import os.path
+from pondering.forms import DomainScheduler
+from pondering.models import Domain, PhishingTrip, PhishingTripInstance
+
 
 def root(request):
+    # Redirect clients accessing the service from a non-standard path.
     return redirect('http://localhost:8000/home')
 
 
@@ -39,19 +46,86 @@ def signIn(request):
     # Redirect to the Azure sign-in page
     return HttpResponseRedirect(flow['auth_uri'])
 
+
 def goPhishing(request):
     context = initializeContext(request)
-    if request.method == 'GET':
-        return render(request, 'pondering/gophish.html', context=context)
-    elif request.method == 'POST':
-        context = request.POST
-        validatePhishing(context)
-        return render(request, 'pondering/gophish.html', context=context)
+    context = getPhishingContext(context)
+    if request.method == 'POST':
+        contxt = postPhishingContext(request, context)
+        return HttpResponseRedirect(reverse('schedule'))
+    return render(request, 'pondering/gophish.html', context=context)
+
+def getPhishingContext(context):
+    context['csrfmiddlewaretoken'] = ''
+    context['company'] = ''
+    context['poc'] = ''
+    context['url'] = ''
+    context['datetime'] = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%dT%H:%M')
+    return context
 
 
-def validatePhishing(context):
-    print(context)
-    pass
+def postPhishingContext(request, context):
+    context.update(request.POST.dict()) 
+    phishingForm = DomainScheduler(request.POST)
+    result = phishingForm.is_valid()
+    print(phishingForm.errors)
+    if phishingForm.is_valid():
+        logging.info("Domain and date are valid from: {0}".format(getClientIp(request)))
+        data = phishingForm.cleaned_data
+        domain = filterDomain(data['domain'])
+        location = filterPhishingTrip(data['company'], data['poc'])
+        time = data['datetime']
+        event = PhishingTripInstance()
+        filterDomainCR(event, location, time, domain) 
+        context.update(data)
+        return context
+    else:
+        logging.warning('Client has deliberately circumvented JavaScript input filtering.')
+        logging.warning('Client is attempting an injection attack from: {0}'.format(getClientIp(request)))
+        return context 
+
+def filterDomain(url):
+    location = Domain()
+    if Domain.objects.filter(url__icontains=url):
+        location = Domain.objects.filter(url__icontains=url).first()
+    else:
+        location.url = url 
+        location.save()
+    return location
+
+def filterPhishingTrip(company, poc):
+    trip = PhishingTrip()
+    if PhishingTrip.objects.filter(company__icontains=company).filter(poc__icontains=poc):
+            trip = PhishingTrip.objects.filter(company__icontains=company).filter(poc__icontains=poc).first()
+    else:
+        trip.company = company
+        trip.poc = poc 
+        trip.save()
+    return trip
+
+def filterDomainCR(event, location, time, domain):
+    event.trip = location
+    event.datetime = time 
+    event.save()
+    if PhishingTripInstance.objects.filter(domain__url=domain.url):
+        pass
+    else:
+        event.domain = domain
+        event.save()
+    
+
+def schedule(request):
+    context = initializeContext(request)
+    return render(request, 'pondering/schedule.html', context=context)
+
+
+def getClientIp(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 
 def callback(request):
@@ -68,3 +142,14 @@ def signOut(request):
     # Delete the user and token
     removeUserAndToken(request)
     return HttpResponseRedirect(reverse('home'))
+
+
+class PhishingTripListView(generic.ListView):
+    model = PhishingTripInstance
+       
+    def get_queryset(self):
+        return PhishingTripInstance.objects.all()
+
+
+class PhishingTripDetailView(generic.DetailView):
+    model = PhishingTripInstance

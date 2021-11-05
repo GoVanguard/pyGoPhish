@@ -1,0 +1,10 @@
+{% extends "pondering/layout.html" %}
+
+{% block content %}
+  <div class="jumbotron">
+    <h1>Company: {{ phishingtripinstance.trip.company }}</h1>
+    <p><strong>Point of Contact: {{ phishingtripinstance.trip.poc }}</strong></p>
+    <p><strong>Domain: {{ phishingtripinstance.domain }}</strong></p>
+    <p><strong>Event Date: {{ phishingtripinstance.datetime }}</strong></p>
+  </div>
+{% endblock content %}
