@@ -4,8 +4,8 @@ pyGoPhish is a GoVanguard microservices web application that automates phishing 
  
 # Bibliography
 
-Beck, Kent et al. Agile Manifesto https://agilemanifesto.org/
-Johnston, Jason et al. Microsoft Graph Tutorials https://github.com/microsoftgraph/msgraph-training-pythondjangoapp/blob/main/CONTRIBUTING.md
-Klensin, J. et al. Simple Mail Transfer Protocol https://datatracker.ietf.org/doc/html/rfc5321
-Meyers, Brad et al. Past, Present, and Future of User Interface Software Tools https://dl.acm.org/doi/10.1145/344949.344959
-Richadrson, Chris et al. Microservices Pattern https://microservices.io/
+1. Beck, Kent et al. Agile Manifesto https://agilemanifesto.org/
+2. Johnston, Jason et al. Microsoft Graph Tutorials https://github.com/microsoftgraph/msgraph-training-pythondjangoapp/blob/main/CONTRIBUTING.md
+3. Klensin, J. et al. Simple Mail Transfer Protocol https://datatracker.ietf.org/doc/html/rfc5321
+4. Meyers, Brad et al. Past, Present, and Future of User Interface Software Tools https://dl.acm.org/doi/10.1145/344949.344959
+5. Richadrson, Chris et al. Microservices Pattern https://microservices.io/
