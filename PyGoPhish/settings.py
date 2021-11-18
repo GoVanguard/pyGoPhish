@@ -10,7 +10,27 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
+from os.path import exists
 from pathlib import Path
+from django.core.management.utils import get_random_secret_key
+
+ENV_VARS_FILE = 'setup.ini'
+ENV_SECRET_KEY = 'secret_key'
+SECRET_KEY = ''
+
+def setSecretKey():
+    if exists(ENV_VARS_FILE):
+        with open(ENV_VARS_FILE) as envVars:
+            for line in envVars:
+                if line.lower().startswith(ENV_SECRET_KEY.lower()):
+                    SECRET_KEY = line[len(ENV_SECRET_KEY)+1:]
+                    return SECRET_KEY
+                else:
+                    SECRET_KEY = get_random_secret_key()
+                    return(SECRET_KEY)
+    else:
+        SECRET_KEY = get_random_secret_key()
+        return SECRET_KEY
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +40,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-pqeufvd+j5+sm4wy38y^l8$!yh@3h9d%!51=mg9(6u84(-jv*h'
+SECRET_KEY = setSecretKey()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

@@ -6,7 +6,8 @@
     <table class="table">
         <tr>
           <th scope="col">#</th>
-          <th scope="col">Domain</th>
+	  <th scope="col">Phishing Website</th>
+          <th scope="col">Target</th>
           <th scope="col">Company</th>
 	  <th scope="col">Point of Contact</th>
           <th scope="col">Time</th>
@@ -14,7 +15,8 @@
         {% for tripinst in object_list %}
           <tr>
             <th scope="row">{{ forloop.counter }}</th>
-            <td><a href="{{ tripinst.getAbsoluteURL }}">{{ tripinst.domain.url}}</a></td>
+	    <td>{{ tripinst.trip.phishingdomain__url }}</td>
+            <td><a href="{{ tripinst.getAbsoluteURL }}">{{ tripinst.target.url }}</a></td>
 	    <td>{{ tripinst.trip.company }}</td>
             <td>{{ tripinst.trip.poc }}</td>
             <td>{{ tripinst.datetime }}</td>

@@ -6,11 +6,10 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render, redirect
 from django.views import generic
-from .models import Domain, PhishingTrip, PhishingTripInstance
+from pondering.models import Target, PhishingDomain, PhishingTrip, PhishingTripInstance, PhishingEmail
 from pondering.authhelper import getSignInFlow, getTokenFromCode, storeUser, removeUserAndToken, getToken
 from pondering.graphhelper import getUser
 from pondering.forms import DomainScheduler
-from pondering.models import Domain, PhishingTrip, PhishingTripInstance
 
 
 def root(request):
@@ -72,7 +71,7 @@ def postPhishingContext(request, context):
     if phishingForm.is_valid():
         logging.info("Domain and date are valid from: {0}".format(getClientIp(request)))
         data = phishingForm.cleaned_data
-        domain = filterDomain(data['domain'])
+        target = filterDomain(data['target'])
         location = filterPhishingTrip(data['company'], data['poc'])
         time = data['datetime']
         event = PhishingTripInstance()

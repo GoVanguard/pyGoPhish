@@ -116,3 +116,4 @@ QSTemp/
 
 # Secrets protection
 oauthsettings.yml
+setup.ini
