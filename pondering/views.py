@@ -6,7 +6,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render, redirect
 from django.views import generic
-from pondering.models import Target, PhishingDomain, PhishingTrip, PhishingTripInstance, PhishingEmail
+from pondering.models import TargetWebsite, PhishingWebsite, PhishingTrip, PhishingTripInstance, PhishingEmail
 from pondering.authhelper import getSignInFlow, getTokenFromCode, storeUser, removeUserAndToken, getToken
 from pondering.graphhelper import getUser
 from pondering.forms import DomainScheduler
@@ -50,7 +50,7 @@ def goPhishing(request):
     context = initializeContext(request)
     context = getPhishingContext(context)
     if request.method == 'POST':
-        contxt = postPhishingContext(request, context)
+        context = postPhishingContext(request, context)
         return HttpResponseRedirect(reverse('schedule'))
     return render(request, 'pondering/gophish.html', context=context)
 
@@ -71,7 +71,7 @@ def postPhishingContext(request, context):
     if phishingForm.is_valid():
         logging.info("Domain and date are valid from: {0}".format(getClientIp(request)))
         data = phishingForm.cleaned_data
-        target = filterDomain(data['target'])
+        target = filterTargetWebsite(data['targetwebsite'])
         location = filterPhishingTrip(data['company'], data['poc'])
         time = data['datetime']
         event = PhishingTripInstance()
@@ -83,10 +83,10 @@ def postPhishingContext(request, context):
         logging.warning('Client is attempting an injection attack from: {0}'.format(getClientIp(request)))
         return context 
 
-def filterDomain(url):
-    location = Domain()
-    if Domain.objects.filter(url__icontains=url):
-        location = Domain.objects.filter(url__icontains=url).first()
+def filterTargetWebsite(url):
+    location = TargetWebsite()
+    if TargetWebsite.objects.filter(url__icontains=url):
+        location = TargetWebsite.objects.filter(url__icontains=url).first()
     else:
         location.url = url 
         location.save()

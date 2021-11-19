@@ -1,36 +1,43 @@
 {% extends "pondering/layout.html" %}
 {% load static %}
 {% block head %}
-<script src="{% static 'validatePhish.js' %}" type="text/javascript"></script>
+    <script src="{% static 'validatePhish.js' %}" type="text/javascript"></script>
 {% endblock %}
 {% block content %}
-<div class="jumbotron">
-    {% if user.is_authenticated %}
-    <h4>Welcome {{ user.name }}!</h4>
-    <p class="lead" id="userPrompt">Where would you like to go phishing?</p>
-    <form action="/gophish" id="form" method="post">
-        {% csrf_token %}
-	<label for="company">Company:</label>
-	<input type="text" id="company" name="company" value="{{ company }}" required>
-	<label for="poc">Point of Contact:</label>
-	<input type="text" id="poc" name="poc" value="{{ authority }}" required>
-	<br/>
-        <label for="target">Domain:</label>
-	<input type="text" id="target" name="target" value="{{ domain }}" required>
-        <label for="target" id="lag">0 ms</label>
-	<label for="targets">Domains File:</label>
-	<input type="file" id="targets" value="targets" name="targets">
-        <br/>
-        <label id ="datetimelabel" for="datetime">Date:</label>
-	<input type="datetime-local" id="datetime" name="datetime" autocomplete="on" value="{{ datetime }}">
-        <input type="submit" id="prompt" value="Schedule" disabled>
-        <br/>
-        <input type="checkbox" id="urgent" name="urgent">
-        <label for="urgent">Schedule immediately.</label>
-    </form>
-    {% else %}
-    <h1>PyGoPhish - Please sign in to phish.</h1>
-    <a href="{% url 'signin' %}" class="btn btn-primary btn-large">Click here to sign in</a>
-    {% endif %}
-</div>
+    <div class="jumbotron">
+        {% if user.is_authenticated %}
+        <h4>Welcome {{ user.name }}!</h4>
+        <p class="lead" id="userPrompt">Where would you like to go phishing?</p>
+        <form action="/gophish" id="form" method="post">
+            {% csrf_token %}
+    	    <label for="company">Company:</label>
+            <input type="text" id="company" name="company" value="{{ company }}" required>
+            <label for="poc">Point of Contact:</label>
+            <input type="text" id="poc" name="poc" value="{{ authority }}" required>
+	    <label for="owner">Phishing Campaign Owner:</label>
+	    <input type="text" id="owner" name="owner" value="{{ owner }}" required>
+            <label for="phishingwebsite">Phishing Website:</label>
+            <input type="text" id="phishingwebsite" name="phishingwebsite" value="{{ phishingwebsite }}" required>
+            <label for="targetwebsite">Target Website:</label>
+            <input type="text" id="targetwebsite" name="targetwebsite" value="{{ targetwebsite }}" required>
+            <label for="target" id="lag">0 ms</label>
+            <br/>
+            <label for="targets">Targets File:</label>
+            <input type="file" id="targets" value="targets" name="targets">
+            <br/>
+            <label id ="datetimelabel" for="datetime">Date:</label>
+    	<input type="datetime-local" id="datetime" name="datetime" autocomplete="on" value="{{ datetime }}">
+            <input type="submit" id="prompt" value="Schedule" disabled>
+            <br/>
+            <input type="checkbox" id="urgent" name="urgent">
+            <label for="urgent">Schedule immediately.</label>
+        </form>
+        {% else %}
+        <h1>PyGoPhish - Please sign in to phish.</h1>
+        <a href="{% url 'signin' %}" class="btn btn-primary btn-large">Click here to sign in</a>
+        {% endif %}
+    </div>
+{% endblock %}
+{% block postcript %}
+    <script src="{% static 'initPhish.js' %}" type="text/javascript"></script>
 {% endblock %}

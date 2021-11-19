@@ -7,10 +7,10 @@ from django.utils.translation import ugettext_lazy as _
 from socket import gaierror 
 
 class DomainScheduler(forms.Form):
-    company = forms.CharField(label='Company', max_length=32)
-    poc = forms.CharField(label='POC', max_length=32)
-    domain = forms.URLField(label='Domain', max_length=2048)
-    datetime = forms.DateTimeField(label='Event')
+    company = forms.CharField(label='company', max_length=32)
+    poc = forms.CharField(label='poc', max_length=32)
+    targetwebsite = forms.URLField(label='targetwebsite', max_length=2048)
+    datetime = forms.DateTimeField(label='event')
 
     def clean_company(self):
         user_input = self.cleaned_data['company']
@@ -27,9 +27,9 @@ class DomainScheduler(forms.Form):
         
         return data
 
-    def clean_domain(self):
-        user_input = self.cleaned_data['domain']
-        data = self.cleaned_data['domain']
+    def clean_targetwebsite(self):
+        user_input = self.cleaned_data['targetwebsite']
+        data = self.cleaned_data['targetwebsite']
 
         # Check if user prepended information.
         temp = data.split('.')

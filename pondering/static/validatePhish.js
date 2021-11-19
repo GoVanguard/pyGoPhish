@@ -1,3 +1,56 @@
+function check() {
+    const userPrompt = document.getElementById("userPrompt");
+    const phishingWebsite = document.getElementById("phishingwebsite").value;
+    const targetWebsite = document.getElementById("targetwebsite").value;
+    const targets = document.getElementById("targets");
+    const uDateTime = document.getElementById("datetime");
+    const uPrompt = document.getElementById("prompt");
+    const urgent = document.getElementById("urgent").checked;
+    if(urgent && (!targetWebsite || !targets)) {
+        uPrompt.value = "Next";
+        uDateTime.type = "hidden";
+        userPrompt.innerHTML = "Immediately? Please enter a domain.";
+        uPrompt.disabled = true;
+    }
+    else if(urgent && (!targetWebsite || !targets)) {
+        uPrompt.value = "Next";
+        uDateTime.type = "hidden";
+        if(validateDomain(domain)) {
+            userPrompt.innerHTML = "Immediately? The boat awaits!";
+            uPrompt.disabled = false;
+        }
+        else {
+            userPrompt.innerHTML = "That is not a valid domain.";
+            uPrompt.disabled = true;
+        }
+    }
+    else {
+        uPrompt.value = "Schedule";
+        uDateTime.type = "datetime-local";
+        if(targetWebsite || targets) {
+            if(validateDomain(targetWebsite)) { 
+                if(validateSchedule(uDateTime.value)) {
+                    userPrompt.innerHTML = "Let's schedule the trip."
+                    uPrompt.disabled = false;
+                    targets.required = false;
+                }
+                else {
+                    userPrompt.innerHTML = "Please choose a valid date and time for phishing."
+                    uPrompt.disabled = true;
+                }
+            }
+            else {
+                userPrompt.innerHTML = "This is not a valid domain.";
+                uPrompt.disabled = true;
+    	}
+        }
+        else {
+            userPrompt.innerHTML = "Please enter a domain.";
+            uPrompt.disabled = true;
+        }
+    }
+}
+
 function validateDomain(domain) {
     validate = /^[a-z0-9]+([-.][a-z0-9]+)*\.[a-z]{2,}$/i.test(domain)
     if(validate) {
