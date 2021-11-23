@@ -1,5 +1,6 @@
 import logging
 import requests
+from requests import ConnectionError
 from datetime import datetime, timezone, timedelta
 from django import forms
 from django.core.exceptions import ValidationError
@@ -9,60 +10,44 @@ from socket import gaierror
 class DomainScheduler(forms.Form):
     company = forms.CharField(label='company', max_length=32)
     poc = forms.CharField(label='poc', max_length=32)
+    owner = forms.CharField(label='owner', max_length=32)
+    phishingwebsite = forms.URLField(label='phishingwebsite', max_length=2048)
     targetwebsite = forms.URLField(label='targetwebsite', max_length=2048)
-    datetime = forms.DateTimeField(label='event')
+    targets = forms.FileField(label='targets', max_length=32, allow_empty_file=True, required=False)
+    datetime = forms.DateTimeField(label='datetime')
 
     def clean_company(self):
-        user_input = self.cleaned_data['company']
         data = self.cleaned_data['company']
         
-        # TODO: Write a method to check for and remove special characters, reduce white space, and replace spaces with hyphens.
+        # TODO: Write a method to check for and remove special characters and reduce white space.
         
         return data
 
     def clean_poc(self):
-        user_input = self.cleaned_data['poc']
         data = self.cleaned_data['poc']
-        # TODO: Write a method to check for and remove special characters, reduce white space, and replace spaces with hyphens.
+        # TODO: Write a method to check for and remove special characters and reduce white space.
         
         return data
+
+    def clean_owner(self):
+        data = self.cleaned_data['owner']
+
+        # TODO: Write a method to check for and remove special characters and reduce white space.
+
+        return data
+
+
+    def clean_phishingwebsite(self):
+        userInput = self.cleaned_data['phishingwebsite']
+        data = self.cleaned_data['phishingwebsite']
+        return self.scrubURL(userInput, data)
+
 
     def clean_targetwebsite(self):
-        user_input = self.cleaned_data['targetwebsite']
+        userInput = self.cleaned_data['targetwebsite']
         data = self.cleaned_data['targetwebsite']
+        return self.scrubURL(userInput, data)
 
-        # Check if user prepended information.
-        temp = data.split('.')
-
-        if 'http://www' in temp:
-            data = data[11:]
-        
-        temp = data.split('.')
-
-        if 'http://' in temp:
-            data = data[7:]
-
-        temp = data.split('.')
-
-        if 'www' in temp:
-            data = data[4:]
-        
-        try:
-            # Check if a domain responds to a ping request.
-            response = requests.get(data)
-        except gaierror:
-            # Note if we are too impatient with the request.
-            logging.error('Requests library did not await domain resolution.')
-       
-        # Validate the URL
-        if response.status_code == 200 or 300 or 301 or 302 or 308:
-            # TODO: Handle redirects and update the url.
-            pass
-        else:
-            logging.error('User attempted entering the following URL: {0}'.format(user_input))
-            logging.error('http://{0} does not allow GET requests.'.format(user_input))
-            raise ValidationError(_('The domain did not respond.'))
-        return data
 
     def clean_datetime(self):
         data = self.cleaned_data['datetime']
@@ -83,3 +68,47 @@ class DomainScheduler(forms.Form):
             raise ValidationError(_('Invalid date - the scheduled time is in the wrong year.'))
         # Remember to always return the cleaned data.
         return data
+
+
+    def scrubURL(self, userInput, data):
+        # Check if user prepended information.
+        temp = data.split('.')
+
+        if 'https://www' in temp:
+            data = data[12:]
+        
+        if 'http://www' in temp:
+            data = data[11:]
+        
+        temp = data.split('.')
+        
+        if 'https://' in temp:
+            data = data[8:]
+
+        if 'http://' in temp:
+            data = data[7:]
+
+        temp = data.split('.')
+
+        if 'www.' in temp:
+            data = data[4:]
+        
+        try:
+            # Check if the domain responds to a ping request.
+            response = requests.get(data)
+        except ConnectionError as err:
+            # Note if the destination or network connection are not reachable.
+            logging.error('The network connection to {0} timed out. Either the resource does not exist or the destination is not reachable (try again after verifying your url dns listing).'.format(data))
+        except gaierror as err:
+            # Note if we are too impatient with the request.
+            logging.error('Requests library did not await domain resolution.')
+        else: 
+            # Validate the URL
+            if response.status_code == 200 or 300 or 301 or 302 or 308:
+                # TODO: Handle redirects, update the url, and perform a recursive callback on the new destination.
+                pass
+            else:
+                logging.warning('User attempted entering the following URL: {0}'.format(user_input))
+                logging.warning('http://{0} is not listed or does not allow GET requests.'.format(user_input))
+        finally:
+            return data

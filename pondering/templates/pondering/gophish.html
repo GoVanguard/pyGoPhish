@@ -6,34 +6,60 @@
 {% block content %}
     <div class="jumbotron">
         {% if user.is_authenticated %}
-        <h4>Welcome {{ user.name }}!</h4>
+        <h5>Welcome {{ user.name }}!</h4>
         <p class="lead" id="userPrompt">Where would you like to go phishing?</p>
         <form action="/gophish" id="form" method="post">
             {% csrf_token %}
-    	    <label for="company">Company:</label>
-            <input type="text" id="company" name="company" value="{{ company }}" required>
-            <label for="poc">Point of Contact:</label>
-            <input type="text" id="poc" name="poc" value="{{ authority }}" required>
-	    <label for="owner">Phishing Campaign Owner:</label>
-	    <input type="text" id="owner" name="owner" value="{{ owner }}" required>
-            <label for="phishingwebsite">Phishing Website:</label>
-            <input type="text" id="phishingwebsite" name="phishingwebsite" value="{{ phishingwebsite }}" required>
-            <label for="targetwebsite">Target Website:</label>
-            <input type="text" id="targetwebsite" name="targetwebsite" value="{{ targetwebsite }}" required>
-            <label for="target" id="lag">0 ms</label>
-            <br/>
-            <label for="targets">Targets File:</label>
-            <input type="file" id="targets" value="targets" name="targets">
-            <br/>
-            <label id ="datetimelabel" for="datetime">Date:</label>
-    	<input type="datetime-local" id="datetime" name="datetime" autocomplete="on" value="{{ datetime }}">
-            <input type="submit" id="prompt" value="Schedule" disabled>
-            <br/>
+            <div>
+                <strong>
+                    <label for="company">Company:</label>
+                </strong>
+                <input type="text" id="company" name="company" value="{{ company }}" required>
+            </div>
+            <div>
+                <strong>
+                    <label for="poc">Point of Contact:</label>
+                </strong>
+                <input type="text" id="poc" name="poc" value="{{ authority }}" required>
+            </div>
+            <div>
+                <strong>
+                    <label for="owner">Phishing Campaign Owner:</label>
+                </strong>
+                <input type="text" id="owner" name="owner" value="{{ owner }}" required>
+            </div>
+            <div>
+                <strong>
+                    <label for="phishingwebsite">Phishing Website:</label>
+                </strong>
+                <input type="text" id="phishingwebsite" name="phishingwebsite" value="{{ phishingwebsite }}" required>
+                <label for="phishingwebsite" id="lagpw">0 ms</label>
+            </div>
+            <div>
+                <strong>
+                    <label for="targetwebsite">Target Website:</label>
+                </strong>
+                <input type="text" id="targetwebsite" name="targetwebsite" value="{{ targetwebsite }}" required>
+                <label for="targetwebsite" id="lagtw">0 ms</label>
+            </div>
+            <div>
+                <strong>
+                    <label for="targets">Targets File:</label>
+                </strong>
+                <input type="file" id="targets" value="targets" name="targets">
+            </div>
+            <div id="datetimefield">
+                <strong>
+                    <label id ="datetimelabel" for="datetime">Date:</label>
+                </strong>
+                <input type="datetime-local" id="datetime" name="datetime" autocomplete="on" value="{{ datetime }}">
+            </div>
             <input type="checkbox" id="urgent" name="urgent">
             <label for="urgent">Schedule immediately.</label>
+            <input type="submit" id="prompt" value="Schedule" disabled>
         </form>
         {% else %}
-        <h1>PyGoPhish - Please sign in to phish.</h1>
+        <h2>PyGoPhish - Please sign in to phish.</h1>
         <a href="{% url 'signin' %}" class="btn btn-primary btn-large">Click here to sign in</a>
         {% endif %}
     </div>

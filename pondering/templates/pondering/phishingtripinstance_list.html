@@ -5,20 +5,18 @@
     {% if object_list %}
     <table class="table">
         <tr>
-          <th scope="col">#</th>
-	  <th scope="col">Phishing Website</th>
-          <th scope="col">Target Website</th>
+          <th scope="col">Scheduling Status</th>
+          <th scope="col">Operational Status</th>
+          <th scope="col">Campaign Setup</th>
           <th scope="col">Company</th>
-	  <th scope="col">Point of Contact</th>
           <th scope="col">Time</th>
         </tr>
         {% for tripinst in object_list %}
           <tr>
-            <th scope="row">{{ forloop.counter }}</th>
-	    <td>{{ tripinst.trip.phishingWebsite  }}</td>
-            <td><a href="{{ tripinst.getAbsoluteURL }}">{{ tripinst.target.url }}</a></td>
-	    <td>{{ tripinst.trip.company }}</td>
-            <td>{{ tripinst.trip.poc }}</td>
+	    <th scope="row">{{ tripinst.getSchedulingStatus }}</th>
+            <td>{{ tripinst.getOperationalStatus }}</td>
+	    <td><a href="{{ tripinst.getAbsoluteURL }}">Setup Campaign</a></td>
+            <td>{{ tripinst.trip.company.name }}</td>
             <td>{{ tripinst.datetime }}</td>
           </tr>
         {% endfor %}

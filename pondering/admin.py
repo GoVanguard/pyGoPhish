@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.sites.models import Site
+from pondering.models import PointOfContact, Company, Owner
 from pondering.models import TargetWebsite, PhishingWebsite, PhishingTrip, PhishingTripInstance, PhishingEmail
 
 # Register your models here.
@@ -11,6 +12,9 @@ class SiteAdmin(admin.ModelAdmin):
     list_display_links = ('name',)
     search_fields = ('name', 'domain')
 admin.site.register(Site, SiteAdmin)
+admin.site.register(PointOfContact)
+admin.site.register(Company)
+admin.site.register(Owner)
 admin.site.register(TargetWebsite)
 admin.site.register(PhishingWebsite)
 admin.site.register(PhishingTrip)

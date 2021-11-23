@@ -1,34 +1,42 @@
 function check() {
     const userPrompt = document.getElementById("userPrompt");
     const phishingWebsite = document.getElementById("phishingwebsite").value;
+    const phishingWebsiteLag = document.getElementById("lagpw")
     const targetWebsite = document.getElementById("targetwebsite").value;
-    const targets = document.getElementById("targets");
+    const targetWebsiteLag = document.getElementById("lagtw")
+    const targets = document.getElementById("targets").value;
+    const dateTimeField = document.getElementById("datetimefield");
     const uDateTime = document.getElementById("datetime");
     const uPrompt = document.getElementById("prompt");
-    const urgent = document.getElementById("urgent").checked;
-    if(urgent && (!targetWebsite || !targets)) {
+    const urgent = document.getElementById("urgent").checked
+    validSyntaxPhishingWebsite = validateDomain(phishingWebsite, phishingWebsiteLag);
+    validSyntaxTargetWebsite = validateDomain(targetWebsite, targetWebsiteLag);
+    pingDomain(phishingWebsite, phishingWebsiteLag);
+    pingDomain(targetWebsite, targetWebsiteLag);
+    if(urgent) {
+        dateTimeField.hidden = true;
         uPrompt.value = "Next";
-        uDateTime.type = "hidden";
-        userPrompt.innerHTML = "Immediately? Please enter a domain.";
-        uPrompt.disabled = true;
-    }
-    else if(urgent && (!targetWebsite || !targets)) {
-        uPrompt.value = "Next";
-        uDateTime.type = "hidden";
-        if(validateDomain(domain)) {
-            userPrompt.innerHTML = "Immediately? The boat awaits!";
-            uPrompt.disabled = false;
+        if(!targetWebsite && !targets) {
+            userPrompt.innerHTML = "Immediately? Please enter a domain.";
+            uPrompt.disabled = true;
         }
         else {
-            userPrompt.innerHTML = "That is not a valid domain.";
-            uPrompt.disabled = true;
+            uPrompt.value = "Next";
+            if(validSyntaxTargetWebsite) {
+                userPrompt.innerHTML = "Immediately? The boat awaits!";
+                uPrompt.disabled = false;
+            }
+            else {
+                userPrompt.innerHTML = "That is not a valid domain.";
+                uPrompt.disabled = true;
+            }
         }
     }
     else {
         uPrompt.value = "Schedule";
-        uDateTime.type = "datetime-local";
+        dateTimeField.hidden = false;
         if(targetWebsite || targets) {
-            if(validateDomain(targetWebsite)) { 
+            if(validSyntaxTargetWebsite) { 
                 if(validateSchedule(uDateTime.value)) {
                     userPrompt.innerHTML = "Let's schedule the trip."
                     uPrompt.disabled = false;
@@ -42,7 +50,7 @@ function check() {
             else {
                 userPrompt.innerHTML = "This is not a valid domain.";
                 uPrompt.disabled = true;
-    	}
+    	    }
         }
         else {
             userPrompt.innerHTML = "Please enter a domain.";
@@ -52,17 +60,21 @@ function check() {
 }
 
 function validateDomain(domain) {
-    validate = /^[a-z0-9]+([-.][a-z0-9]+)*\.[a-z]{2,}$/i.test(domain)
-    if(validate) {
-        result = ping.ping("http://www." + domain,(err, data) => {
-           if (err) {
-               console.log("The requested resource does not exist.");
-           }});
-           result.then((state) => {
-               document.getElementById("lag").innerHTML = state + " ms";
-           })
-    }
+    validate = /^[a-z0-9]+([-.][a-z0-9]+)*\.[a-z]{2,}$/i.test(domain);
     return validate;
+}
+
+function pingDomain(domain, update) {
+    if(validateDomain(domain)) {
+        result = ping.ping("http://www." + domain)
+        result.then(data => {
+            update.innerHTML = data + " ms";
+        });
+        result.catch(data => {
+            console.error("Ping failed: " + data);
+            update.innerHTML = "Unlisted";
+        });
+    }
 }
 
 function validateSchedule(uDateTime) {

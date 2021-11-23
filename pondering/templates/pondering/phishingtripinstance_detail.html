@@ -2,9 +2,10 @@
 
 {% block content %}
   <div class="jumbotron">
-    <h1>Company: {{ phishingtripinstance.trip.company }}</h1>
-    <p><strong>Point of Contact: {{ phishingtripinstance.trip.poc }}</strong></p>
-    <p><strong>Domain: {{ phishingtripinstance.domain }}</strong></p>
-    <p><strong>Event Date: {{ phishingtripinstance.datetime }}</strong></p>
+    <h1>Company: {{ object.trip.company.name }}</h1>
+    <p><strong>Point of Contact: </strong>{{ object.trip.company.poc.name }}</p>
+    <p><strong>Scheduling Status: </strong>{{ object.getSchedulingStatus }}</p>
+    <p><strong>Target: </strong><a href="{{ object.target }}">{{ object.target }}</a></p>
+    <p><strong>Event Date: </strong>{{ phishingtripinstance.datetime }}</p>
   </div>
 {% endblock content %}

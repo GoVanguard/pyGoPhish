@@ -3,7 +3,55 @@ from django.db import models
 from django.urls import reverse
 
 
-# TODO: Refactor class models to reflect database inheritance chain. In reflexive cases order alphabetically.
+class PointOfContact(models.Model):
+    """Model for organizing points of contact for information concerning a specific company."""
+    name = models.CharField(max_length=32, null=True, blank=True, help_text='Point of contact that knows the most about a specific company.')
+
+    def __str__(self):
+        """Point of contact object string."""
+        return self.name
+
+
+class Company(models.Model):
+    """Model for organizing companies that are contracting social engineering."""
+    name = models.CharField(max_length=32, null=True, blank=True, help_text='Company that contracted GoVanguard for a phishing campaign.')
+    poc = models.ForeignKey('pointofcontact', on_delete=models.RESTRICT, null=True, help_text='Point of contact within GoVanguard that knows the most about a specific company.')
+
+    def getCompany(self):
+        """Retrieves the company string."""
+        return self.name
+
+    def getPointOfContact(self):
+        """Retrieves the point of contact string."""
+        return self.poc.name
+
+    def getCompaniesByPOC(self, name):
+        """Retrieves the companies listed underneath a specific point of contact."""
+        result = None
+        try:
+            result = Company.objects.filter(poc__name__icontains=name)
+        except FieldError as exc:
+            logging.error('No points of contact exist: {0}'.format(exc))
+        finally:
+            return result 
+
+    def __str__(self):
+        """Company object string."""
+        return "{0},{1}".format(self.name,self.poc)
+
+
+class Owner(models.Model):
+    """Model for organizing social engineering campaign owners."""
+    name = models.CharField(max_length=32, null=True, blank=True, help_text='Owner of the social engineering campaign the company is contracting with GoVanguard.')
+
+    def getOwner(self):
+        """Retrieves the owner string."""
+        return self.name
+
+    def __str__(self):
+        """Returns the owner string."""
+        return self.name
+
 
 class PhishingWebsite(models.Model):
     """Model for the location and representation of the phishing website."""
@@ -33,55 +81,41 @@ class TargetWebsite(models.Model):
         """Target object string."""
         return self.url
 
-class PointOfContact(models.Model):
-    """Model for organizing points of contact for information concerning a specific company."""
-    poc = models.CharField(max_length=32, null=True, blank=True, help_text='Point of contact that knows the most about a specific company.')
-
-    def __str__(self):
-        """Point of contact object string."""
-        return self.poc
-
-
-class Company(models.Model):
-    """Model for organizing companies that are contracting social engineering."""
-    company = models.CharField(max_length=32, null=True, blank=True, help_text='Company that contracted GoVanguard for a phishing campaign.')
-    poc = models.ForeignKey('pointofcontact', on_delete=models.RESTRICT, null=True, help_text='Point of contact within GoVanguard that knows the most about a specific company.')
-
-    def getCompany(self):
-        """Retrieves the company string."""
-        return self.company
-
-    def getPointOfContact(self):
-        """Retrieves the point of contact string."""
-        return self.poc.poc
-
-    def getCompaniesByPOC(self, name):
-        return self.objects.filter(poc__poc=name)
-
-    def __str__(self):
-        """Company object string."""
-        return "{0},{1}".format(self.company,self.poc)
-
-
-class Owner(models.Model):
-    """Model for organizing social engineering campaign owners."""
-    owner = models.CharField(max_length=32, null=True, blank=True, help_text='Owner of the social engineering campaign the company is contracting with GoVanguard.')
-
 
 class PhishingTrip(models.Model):
     """Model for scheduling phishing trips."""
     company = models.ForeignKey('company', on_delete=models.RESTRICT, null=True, help_text='Company contracting the social engineering campaign from GoVanguard.')
-    poc = models.ForeignKey('pointofcontact', on_delete=models.RESTRICT, null=True, help_text='Point of contact within GoVanguard that knows the most about a specific company.')
+    owner = models.ForeignKey('owner', on_delete=models.RESTRICT, null=True, help_text='Owner of the social engineering campaign the company is contracting with GoVanguard.')
+
+    def getCompany(self):
+        """Retrieves the embedded company name."""
+        return self.company.getCompany()
+
+    def getOwner(self):
+        """Retrieves the embedded owner name."""
+        return self.owner.getOwner()
 
     def __str__(self):
         """Phishing trip object string."""
-        return "{0}, {1}".format(self.company, self.poc)
+        return "{0}, {1}".format(self.company, self.owner)
+
+
+class TargetEmail(models.Model):
+    """Model for storing a target e-mail address."""
+    email = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you are sending an e-mali to.')
+
+    def getEmail(self):
+        """Retrieves the target e-mail string."""
+        return self.email
+
+
+class PhishingList(models.Model):
+    """Model for collecting a list of target e-mail addresses."""
+    phishingList = models.ForeignKey('targetemail', on_delete=models.RESTRICT, null=True, help_text='List of potential e-mail addresses.')
 
 
 class PhishingEmail(models.Model):
     """Model for drafting phishing emails."""
-    targetWebsite = models.ForeignKey('targetwebsite', on_delete=models.RESTRICT, null=True, help_text='Register the URL that actively hosts a Simple Mail Transfer Protocol (SMTP) service.')
-    mailTo = models.ForeignKey('targetemail', on_delete=models.RESTRICT, null=True, blank=True, help_text='The e-mail address you are sending an e-mail to.')
     mailFrom = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you are sending an e-mail from.')
     preview = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you want to preview the e-mail in.')
     subject = models.CharField(max_length=998, null=True, blank=True, help_text='The subject for the phishing campaign e-mail.')
@@ -89,23 +123,14 @@ class PhishingEmail(models.Model):
     keyword = models.CharField(max_length=20, null=True, blank=True, help_text='The template keyword used to substitute in the phishing domain.')
 
 
-class TargetEmail(models.Model):
-    """Model for storing a target email address."""
-    email = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you are sending an e-mali to.')
-
-
-class PhishingList(models.Model):
-    """Model for collecting a list of target email addresses."""
-    phishingList = models.ForeignKey('targetemail', on_delete=models.RESTRICT, null=True, help_text='Hyperlink representation of the phishing domain.')
-
-
 class PhishingTripInstance(models.Model):
     """Model representing a specific phishing trip event."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, help_text='Unique ID for this particular phishing trip.')
-    owner = models.ForeignKey('owner', on_delete=models.RESTRICT, null=True, help_text='Owner of the social engineering campaign the company is contracting with GoVanguard.')
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4(), help_text='Unique ID for this particular phishing trip.')
     trip = models.ForeignKey('phishingtrip', on_delete=models.RESTRICT, null=True, help_text='Create a phishing trip, which may include multiple domains.')
     pond = models.OneToOneField(PhishingWebsite, on_delete=models.CASCADE, null=True, help_text='The phishing website.')
     target = models.OneToOneField(TargetWebsite, on_delete=models.CASCADE, null=True, help_text='The client website that actively hosts a Simple Mail Transfer Protocol (SMTP) service.')
+    email = models.OneToOneField(PhishingEmail, on_delete=models.CASCADE, null=True, help_text='The phishing e-mail to be used during this campaign.')
+    pList = models.ForeignKey('phishinglist', on_delete=models.CASCADE, null=True, help_text='List of potential e-mail addresses.') 
     datetime = models.DateTimeField(max_length=20)
 
     SCHEDULING_STATUS = (
@@ -123,6 +148,7 @@ class PhishingTripInstance(models.Model):
     )
 
     OPERATIONAL_STATUS = (
+        ('a', 'Awaiting Approval'),
         ('i', 'Initializing'),
         ('r', 'Ready'),
         ('p', 'Phishing'),
@@ -130,14 +156,24 @@ class PhishingTripInstance(models.Model):
         ('e', 'Error'),
     )
 
-    operationalSatus = models.CharField(
+    operationalStatus = models.CharField(
         max_length=1,
         choices=OPERATIONAL_STATUS,
         blank=True,
-        default='p',
+        default='a',
         help_text='Phishing campaign operational status.'
     )
 
+    def getSchedulingStatus(self):
+        for count, val in enumerate(self.SCHEDULING_STATUS):
+            if val[0] == self.schedulingStatus:
+                return val[1]
+
+    def getOperationalStatus(self):
+        for count, val in enumerate(self.OPERATIONAL_STATUS):
+            if val[0] == self.operationalStatus:
+                return val[1]
+    
     class Meta:
         ordering = ['datetime'] 
 
