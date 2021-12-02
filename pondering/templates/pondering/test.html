@@ -1,0 +1,14 @@
+{% extends "pondering/layout.html" %}
+{% load static %}
+{% block head %}
+{% endblock %}
+{% block content %}
+    <div class="jumbotron">
+    {% if user.is_authenticated %}
+    	{%
+    {% else %}
+        <h2>PyGoPhish - Please sign in to go phish.</h2>
+        <a href="{% url 'signin' %}" class="btn btn-primary btn-large">Click here to sign in</a>
+    {% endif %}
+    </div>
+{% endblock %}

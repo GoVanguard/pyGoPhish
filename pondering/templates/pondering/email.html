@@ -1,20 +1,19 @@
 {% extends "pondering/layout.html" %}
 {% load static %}
 {% block head %}
-    <script src="{% static 'validatePhish.js' %}" type="text/javascript"></script>
+    <script src="{% static 'validateSetup.js' %}" type="text/javascript"></script>
 {% endblock %}
 {% block content %}
     <div class="jumbotron">
-        {% if user.is_authenticated %}
-        <h5>Welcome {{ user.name }}!</h4>
-        <p class="lead" id="userPrompt">Phishing campaign e-mail setup.</p>
+    {% if user.is_authenticated %}
+        <p class="lead" id="userPrompt">Draft and test phishing campaign narratives here.</p>
         <form action="/setup" id="form" method="post">
             {% csrf_token %}
             <div>
                 <strong>
-                    <label for="from">From: </label>
+                    <label for="emailFrom">From: </label>
                 </strong>
-                <input type="text" id="from" name="from" value="{{ from }}" required>
+                <input type="text" id="emailFrom" name="emailFrom" value="{{ emailFrom }}" required>
             </div>
             <div>
                 <strong>
@@ -34,22 +33,19 @@
                 <input type="text" id="keyword" name="keyword" value="{{ keyword }}" required>
             </div>
             <div>
-                <span class="w-100">
-                    <strong>
-                        <label class="flex" for="body">Body: </label>
-                    </strong>
-                    <textarea class="fit-content" class="input" type="text" id="body" name="body" value="{{ body }}" required></textarea>
-                </span>
+                <strong>
+                    <label class="align-top" for="body">Body: </label>
+                </strong>
+                <textarea class="fit-content input" type="text" id="body" name="body" rows="10" cols="100" required>{{ body }}</textarea>
             </div>
-            <label for="urgent">Schedule immediately.</label>
-            <input type="submit" id="prompt" value="Schedule">
+            <div>
+	            <input class="float-left" formaction="/test" type="submit" id="test" value="Test">
+	            <input class="float-right" type="submit" id="prompt" value="Setup" disabled>
+	        </div>
         </form>
-        {% else %}
-        <h2>PyGoPhish - Please sign in to phish.</h1>
+    {% else %}
+        <h2>PyGoPhish - Please sign in to go phish.</h2>
         <a href="{% url 'signin' %}" class="btn btn-primary btn-large">Click here to sign in</a>
-        {% endif %}
+    {% endif %}
     </div>
-{% endblock %}
-{% block postcript %}
-    <script src="{% static 'initPhish.js' %}" type="text/javascript"></script>
 {% endblock %}

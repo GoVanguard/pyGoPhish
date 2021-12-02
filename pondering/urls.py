@@ -10,8 +10,9 @@ urlpatterns = [
     path('signout', views.signOut, name='signout'),
     path('domain', views.home, name='domain'),
     path('callback', views.callback, name='callback'),
-    path('gophish', views.goPhishing, name='gophish'),
+    path('gophish', views.goPhish, name='gophish'),
     path('setup', views.emailSetup, name='setup'),
+    path('test', views.emailTest, name='test'),
     path('schedule', views.PhishingTripListView.as_view(), name='schedule'),
     path('schedule/<slug:pk>', views.PhishingTripDetailView.as_view(), name='schedule-detail'),
 ]

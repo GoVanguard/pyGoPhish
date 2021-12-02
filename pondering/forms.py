@@ -36,7 +36,6 @@ class DomainScheduler(forms.Form):
 
         return data
 
-
     def clean_phishingwebsite(self):
         userInput = self.cleaned_data['phishingwebsite']
         data = self.cleaned_data['phishingwebsite']
@@ -112,3 +111,46 @@ class DomainScheduler(forms.Form):
                 logging.warning('http://{0} is not listed or does not allow GET requests.'.format(user_input))
         finally:
             return data
+
+class DomainNarrative(forms.Form):
+    """Form for drafting phishing emails."""
+    emailFrom = forms.EmailField(label='emailFrom', max_length=320)
+    preview = forms.EmailField(label='preview', max_length=320)
+    subject = forms.CharField(label='subject', max_length=998)
+    body = forms.CharField(label='body', max_length=10000)
+    keyword = forms.CharField(label='keyword', max_length=20)
+
+    def clean_emailFrom(self):
+        data = self.cleaned_data['emailFrom']
+
+        # TODO: Write a method to check for and remove special characters and reduce white space.
+
+        return data
+
+    def clean_preview(self):
+        data = self.cleaned_data['preview']
+
+        # TODO: Write a method to check for and remove special characters and reduce white space.
+
+        return data
+    
+    def clean_subject(self):
+        data = self.cleaned_data['subject']
+
+        # TODO: Write a method to check for and remove special characters and reduce white space.
+
+        return data
+
+    def clean_body(self):
+        data = self.cleaned_data['body']
+
+        # TODO: Write a method to check for and remove special characters and reduce white space.
+
+        return data
+
+    def clean_keyword(self):
+        data = self.cleaned_data['keyword']
+
+        # TODO: Write a method to check for and remove special characters and reduce white space.
+
+        return data

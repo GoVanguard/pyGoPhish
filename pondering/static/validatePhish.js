@@ -53,7 +53,7 @@ function check() {
     	    }
         }
         else {
-            userPrompt.innerHTML = "Please enter a domain.";
+            userPrompt.innerHTML = "Where would you like to go phishing?";
             uPrompt.disabled = true;
         }
     }

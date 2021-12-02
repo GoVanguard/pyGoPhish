@@ -39,6 +39,10 @@ class Company(models.Model):
         """Company object string."""
         return "{0},{1}".format(self.name,self.poc)
 
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "companies"
+
 
 class Owner(models.Model):
     """Model for organizing social engineering campaign owners."""
@@ -46,7 +50,7 @@ class Owner(models.Model):
 
     def getOwner(self):
         """Retrieves the owner string."""
-        return self.name
+        return self.__str__()
 
     def __str__(self):
         """Returns the owner string."""
@@ -100,7 +104,7 @@ class PhishingTrip(models.Model):
         return "{0}, {1}".format(self.company, self.owner)
 
 
-class TargetEmail(models.Model):
+class TargetEmailAddress(models.Model):
     """Model for storing a target e-mail address."""
     email = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you are sending an e-mali to.')
 
@@ -111,16 +115,16 @@ class TargetEmail(models.Model):
 
 class PhishingList(models.Model):
     """Model for collecting a list of target e-mail addresses."""
-    phishingList = models.ForeignKey('targetemail', on_delete=models.RESTRICT, null=True, help_text='List of potential e-mail addresses.')
+    phishingList = models.ForeignKey('targetemailaddress', on_delete=models.RESTRICT, null=True, help_text='List of potential e-mail addresses.')
 
 
 class PhishingEmail(models.Model):
     """Model for drafting phishing emails."""
-    mailFrom = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you are sending an e-mail from.')
+    emailFrom = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you are sending an e-mail from.')
     preview = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you want to preview the e-mail in.')
     subject = models.CharField(max_length=998, null=True, blank=True, help_text='The subject for the phishing campaign e-mail.')
-    body = models.CharField(max_length=10000, null=True, blank=True, help_text='The body of the phishing campaign e-mail.')
     keyword = models.CharField(max_length=20, null=True, blank=True, help_text='The template keyword used to substitute in the phishing domain.')
+    body = models.CharField(max_length=10000, null=True, blank=True, help_text='The body of the phishing campaign e-mail.')
 
 
 class PhishingTripInstance(models.Model):
@@ -129,7 +133,7 @@ class PhishingTripInstance(models.Model):
     trip = models.ForeignKey('phishingtrip', on_delete=models.RESTRICT, null=True, help_text='Create a phishing trip, which may include multiple domains.')
     pond = models.OneToOneField(PhishingWebsite, on_delete=models.CASCADE, null=True, help_text='The phishing website.')
     target = models.OneToOneField(TargetWebsite, on_delete=models.CASCADE, null=True, help_text='The client website that actively hosts a Simple Mail Transfer Protocol (SMTP) service.')
-    email = models.OneToOneField(PhishingEmail, on_delete=models.CASCADE, null=True, help_text='The phishing e-mail to be used during this campaign.')
+    email = models.ForeignKey('phishingemail', on_delete=models.CASCADE, null=True, help_text='The phishing e-mail to be used during this campaign.')
     pList = models.ForeignKey('phishinglist', on_delete=models.CASCADE, null=True, help_text='List of potential e-mail addresses.') 
     datetime = models.DateTimeField(max_length=20)
 
@@ -186,8 +190,17 @@ class PhishingTripInstance(models.Model):
         return 'schedule/{0}'.format(self.id)
 
 
-class PhishingResult(models.Model): 
-    """Model for collecting results from a phishing trip instance."""
-    result = models.ForeignKey('phishingtripinstance', on_delete=models.RESTRICT, null=True, help_text='An individual phishing campaign.')
-    phishingList = models.ForeignKey('phishinglist', on_delete=models.RESTRICT, null=True, help_text='List of e-mail addresses for this phishing campaign.')
-    phishingEmail = models.ForeignKey('phishingemail', on_delete=models.RESTRICT, null=True, help_text='The e-mail template for this phishing campaign.')
+class GoPhishing(PhishingTripInstance):
+    PhishingTripInstance = PhishingTripInstance
+    PointOfContact = PointOfContact
+    Company = Company
+    Owner = Owner
+    PhishingWebsite = PhishingWebsite
+    TargetWebsite = TargetWebsite
+    PhishingTrip = PhishingTrip
+    TargetEmailAddress = TargetEmailAddress
+    PhishingList = PhishingList
+    PhishingEmail = PhishingEmail
+
+    class Meta:
+        proxy = True

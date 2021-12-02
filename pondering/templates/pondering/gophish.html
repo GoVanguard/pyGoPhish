@@ -6,7 +6,6 @@
 {% block content %}
     <div class="jumbotron">
         {% if user.is_authenticated %}
-        <h5>Welcome {{ user.name }}!</h4>
         <p class="lead" id="userPrompt">Where would you like to go phishing?</p>
         <form action="/gophish" id="form" method="post">
             {% csrf_token %}
