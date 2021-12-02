@@ -11,6 +11,22 @@
             {% csrf_token %}
             <div>
                 <strong>
+                    <label for="service">Service: </label>
+                </strong>
+                <select type="select" id="service" name="service">
+                    <option value="SMTP">SMTP</option>
+                    <option value="MicrosoftGraph">MS Graph</option>
+                    <option value="Office365">Office 365</option>
+                </select>
+		<span id="optional-server" hidden="true">
+    	        	<strong>
+	                        <label for="server">Server: </label>
+			</strong>
+	                <input type="text" id="server" name="server" value="{{ server }}">
+                </span>
+            </div>
+    	    <div>
+                <strong>
                     <label for="emailFrom">From: </label>
                 </strong>
                 <input type="text" id="emailFrom" name="emailFrom" value="{{ emailFrom }}" required>

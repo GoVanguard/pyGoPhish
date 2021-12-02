@@ -35,6 +35,8 @@ class Email:
 
     def getEmailContext(context):
         """Email context initializer."""
+        context['service'] = ''
+        context['domain'] = ''
         context['emailFrom'] = ''
         context['preview'] = ''
         context['subject'] = ''
@@ -48,25 +50,28 @@ class Email:
         if emailForm.is_valid():
             logging.info("The data provided by {0} to the email formatter is valid.".format(getClientIp(request)))
             data = emailForm.cleaned_data
+            service = data['service']
+            domain = data['domain']
             emailFrom = data['emailFrom']
             preview = data['preview']
             subject = data['subject']
             keyword = data['keyword']
             body = data['body']
-            Email.filterEmailInstance(emailFrom, preview, subject, keyword, body)
-            print(data)
+            Email.filterEmailInstance(domain, emailFrom, preview, subject, keyword, body)
             context.update(data)
             return context
         else:
+            if emailForm.errors:
+                logging.error(emailForm.errors)
             logging.warning('Client has deliberately circumvented JavaScript input filtering.')
             logging.warning('Client is attempting an injection attack from: {0}'.format(getClientIp(request)))
             return context
 
-    def filterEmailInstance(emailFrom, preview, subject, keyword, body):
+    def filterEmailInstance(domain, emailFrom, preview, subject, keyword, body):
         """Email narrative duplication filter."""
         narrative = None
         try:
-            narrative = GoPhishing.PhishingEmail.objects.filter(emailFrom__iexact=emailFrom).filter(preview__iexact=preview).filter(subject__iexact=subject).filter(keyword__iexact=keyword).filter(body__iexact=body)
+            narrative = GoPhishing.PhishingEmail.objects.filter(domain__iexact=domain).filter(emailFrom__iexact=emailFrom).filter(preview__iexact=preview).filter(subject__iexact=subject).filter(keyword__iexact=keyword).filter(body__iexact=body)
         except FieldError as exc:
             logging.error('No email narratives exist: {0}'.format(exc))
             logging.info('Generating first phishing email narrative: {0},{1}'.format(emailFrom, subject))
@@ -74,15 +79,16 @@ class Email:
         else:
             result = narrative.first()
             if result is None:
-                narrative = Email.createEmailInstance(emailFrom, preview, subject, keyword, body)
+                narrative = Email.createEmailInstance(domain, emailFrom, preview, subject, keyword, body)
             else:
                 narrative = result
         finally:
             narrative.save()
             return narrative
 
-    def createEmailInstance(emailFrom, preview, subject, keyword, body):
+    def createEmailInstance(domain, emailFrom, preview, subject, keyword, body):
         narrative = GoPhishing.PhishingEmail()
+        narrative.domain = domain
         narrative.emailFrom = emailFrom
         narrative.preview = preview
         narrative.subject = subject
@@ -91,25 +97,33 @@ class Email:
         return narrative
 
     def generateTestEmailSMTP(request, context):
+        service = context['service']
+        domain = context['domain']
         emailFrom = context['emailFrom']
+        if domain:
+            print('empty string matches None')
+            domain = context['domain']
+        else:
+            domain = emailFrom[emailFrom.find('@')+1:]
         emailTo = context['preview']
         keyword = context['keyword']
         subject = context['subject']
         body = context['body']
         user = context['user']
-        domain = emailFrom[emailFrom.find('@')+1:]
         mxservers = []
         connections = []
         connectionReport = {'ConnectionReport': {}}
         # Discover mail exchange servers using the mail exchange record
         try:
+            print(domain)
             response = dns.resolver.query(domain, 'MX')
         except Timeout as exc:
             logging.error("The DNS request to {0} timed out: {1}".format(domain, exc))
             connectionReport.append(('DNS','Domain name resolution timed out.'))
         except NoAnswer as exc:
             logging.error("The DNS request to {0} failed to resolve: {1}".format(domain, exc))
-            connectionReport.append('DNS', 'Domain name server doesn\'t recognize {0}.'.format(domain))
+            connectionReport['ConnectionReport']['DNS'] = 'Failed'
+            connectionReport['ConnectionReport']['DNS']['Error'] = "Domain name server doesni't recognize {0}.".format(domain)
         else:
             for mxserver in response:
                 mxservers.append(mxserver.exchange.to_text())
@@ -190,8 +204,10 @@ class Email:
             email = getMyMail(token)
         except ConnectionError:
             logging.error("{0} did not allow a connection using {1}'s account and produced the following error: {3}".format('Microsoft Graph', context['user'], exc))
+            connectionReport['ConnectionReport']['Email'] = 'Failed'
+            connectionReport['ConnectionReport']['Email']['Error'] = exc
         else:
-            connectionReport['ConnectionReport'] = {'Microsoft Graph': email}
+            connectionReport['ConnectionReport']['Email'] = {'Microsoft Graph': email}
         context.update(connectionReport)
         return render(request, 'pondering/test.html', context=context)
 

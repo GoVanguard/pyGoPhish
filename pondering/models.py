@@ -120,6 +120,7 @@ class PhishingList(models.Model):
 
 class PhishingEmail(models.Model):
     """Model for drafting phishing emails."""
+    domain = models.URLField(max_length=2048, null=True, blank=True, help_text='The location to launch a phishing campaign from.')
     emailFrom = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you are sending an e-mail from.')
     preview = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you want to preview the e-mail in.')
     subject = models.CharField(max_length=998, null=True, blank=True, help_text='The subject for the phishing campaign e-mail.')

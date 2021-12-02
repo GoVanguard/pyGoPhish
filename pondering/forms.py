@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from socket import gaierror 
+from socket import gaierror
 
 class DomainScheduler(forms.Form):
     company = forms.CharField(label='company', max_length=32)
@@ -114,11 +114,32 @@ class DomainScheduler(forms.Form):
 
 class DomainNarrative(forms.Form):
     """Form for drafting phishing emails."""
+    domain = forms.URLField(label='domain', required=False, max_length=2048)
     emailFrom = forms.EmailField(label='emailFrom', max_length=320)
     preview = forms.EmailField(label='preview', max_length=320)
     subject = forms.CharField(label='subject', max_length=998)
     body = forms.CharField(label='body', max_length=10000)
     keyword = forms.CharField(label='keyword', max_length=20)
+
+    SMTP = 'SMTP'
+    MICROSOFT_GRAPH = 'GRAPH'
+    OFFICE_365 = 'O365'
+    SERVICE_CHOICES = [
+        (SMTP, 'Simple Mail Transfer Protocol'),
+        (MICROSOFT_GRAPH, 'Microsoft Graph'),
+        (OFFICE_365, 'Microsoft Office 365'),
+    ]
+    service = forms.CharField(
+        min_length=4,
+        max_length=4,
+    )
+
+    def clean_domain(self):
+        data = self.cleaned_data['domain']
+
+        # TODO: Write a method to check for and remove special characters and reduce white space.
+
+        return data
 
     def clean_emailFrom(self):
         data = self.cleaned_data['emailFrom']
@@ -153,4 +174,10 @@ class DomainNarrative(forms.Form):
 
         # TODO: Write a method to check for and remove special characters and reduce white space.
 
+        return data
+
+    def clean_service(self):
+        data = self.cleaned_data['service']
+        if data in self.SERVICE_CHOICES:
+            print('Match')
         return data
