@@ -120,9 +120,23 @@ class PhishingList(models.Model):
 
 class PhishingEmail(models.Model):
     """Model for drafting phishing emails."""
+    SMTP = 'SMTP'
+    MICROSOFT_GRAPH = 'GRPH'
+    OFFICE_365 = 'O365'
+    SERVICE_CHOICES = [
+        (SMTP, 'Simple Mail Transfer Protocol'),
+        (MICROSOFT_GRAPH, 'Microsoft Graph'),
+        (OFFICE_365, 'Microsoft Office 365'),
+    ]
+    service = models.CharField(
+        max_length=4,
+        null=True,
+        blank=True,
+        help_text='Service providing the mail exchange server.'
+    )
     domain = models.URLField(max_length=2048, null=True, blank=True, help_text='The location to launch a phishing campaign from.')
-    emailFrom = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you are sending an e-mail from.')
-    preview = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you want to preview the e-mail in.')
+    efrom = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you are sending an e-mail from.')
+    to = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you want to preview the e-mail in.')
     subject = models.CharField(max_length=998, null=True, blank=True, help_text='The subject for the phishing campaign e-mail.')
     keyword = models.CharField(max_length=20, null=True, blank=True, help_text='The template keyword used to substitute in the phishing domain.')
     body = models.CharField(max_length=10000, null=True, blank=True, help_text='The body of the phishing campaign e-mail.')
@@ -188,7 +202,7 @@ class PhishingTripInstance(models.Model):
 
     def getAbsoluteURL(self):
         """Returns the URL to access phishing trip details."""
-        return 'schedule/{0}'.format(self.id)
+        return 'settings/{0}'.format(self.id)
 
 
 class GoPhishing(PhishingTripInstance):

@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from pondering import views
 
 
 urlpatterns = [
@@ -14,5 +14,5 @@ urlpatterns = [
     path('setup', views.emailSetup, name='setup'),
     path('test', views.emailTest, name='test'),
     path('schedule', views.PhishingTripListView.as_view(), name='schedule'),
-    path('schedule/<slug:pk>', views.PhishingTripDetailView.as_view(), name='schedule-detail'),
+    path('settings/<slug:pk>', views.PhishingTripDetailView.as_view(), name='schedule-detail'),
 ]

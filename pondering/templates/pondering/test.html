@@ -5,7 +5,17 @@
 {% block content %}
     <div class="jumbotron">
     {% if user.is_authenticated %}
-    	{%
+        {% if emails %}
+            <form action="/test" id="emails" method="post">
+                {% csrf_token %}
+                <ul class="list-group">
+                    <li class="list-group-item active"><span class="strong float-left">Email Address</span><span class="strong float-right">Modify</span></li>
+                {% for email in emails %}
+                    <li class="list-group-item">{{ email }}<button formaction="delEmail" class="btn btn-danger float-right">Delete</button></li>
+                {% endfor %}
+                </ul>
+            </form>
+        {% endif %}
     {% else %}
         <h2>PyGoPhish - Please sign in to go phish.</h2>
         <a href="{% url 'signin' %}" class="btn btn-primary btn-large">Click here to sign in</a>

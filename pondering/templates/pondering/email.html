@@ -10,43 +10,49 @@
         <form action="/setup" id="form" method="post">
             {% csrf_token %}
             <div>
+                <div>
+                    <strong>
+                        <label for="phishingtrip">Phishing Trip: </label>
+                    </strong>
+                    <input type="text" id="phishingtrip" name="phishingtrip" value="{{ phishingTrip }}">
+                </div>
                 <strong>
                     <label for="service">Service: </label>
                 </strong>
                 <select type="select" id="service" name="service">
                     <option value="SMTP">SMTP</option>
-                    <option value="MicrosoftGraph">MS Graph</option>
-                    <option value="Office365">Office 365</option>
+                    <option value="GRPH">MS Graph</option>
+                    <option value="O365">Office 365</option>
                 </select>
-		<span id="optional-server" hidden="true">
-    	        	<strong>
-	                        <label for="server">Server: </label>
-			</strong>
-	                <input type="text" id="server" name="server" value="{{ server }}">
+                <span id="optional-domain" hidden="true">
+                        <strong>
+                                <label for="domain">Host Domain: </label>
+                        </strong>
+                        <input type="text" id="domain" name="domain" placeholder="google.com" value="{{ domain }}">
                 </span>
-            </div>
-    	    <div>
-                <strong>
-                    <label for="emailFrom">From: </label>
-                </strong>
-                <input type="text" id="emailFrom" name="emailFrom" value="{{ emailFrom }}" required>
             </div>
             <div>
                 <strong>
-                    <label for="preview">Test E-mail Address: </label>
+                    <label for="efrom">From: </label>
                 </strong>
-                <input type="text" id="preview" name="preview" value="{{ preview }}" required>
+                <input type="text" id="efrom" name="efrom" placeholder="jcreamer@osotnos.com" value="{{ efrom }}" required>
+            </div>
+            <div>
+                <strong>
+                    <label for="to">Test E-mail Address: </label>
+                </strong>
+                <input type="text" id="to" name="to" placeholder="you@govanguard.com" value="{{ to }}" required>
             </div>
             <div>
                 <strong>
                     <label for="subject">Subject: </label>
                 </strong>
-                <input type="text" id="subject" name="subject" value="{{ subject }}" required>
+                <input type="text" id="subject" name="subject" placeholder="test" value="{{ subject }}" required>
             <div>
                 <strong>
                     <label for="keyword">Keyword: </label>
                 </strong>
-                <input type="text" id="keyword" name="keyword" value="{{ keyword }}" required>
+                <input type="text" id="keyword" name="keyword" placeholder="hyperlink" value="{{ keyword }}" required>
             </div>
             <div>
                 <strong>
@@ -55,13 +61,16 @@
                 <textarea class="fit-content input" type="text" id="body" name="body" rows="10" cols="100" required>{{ body }}</textarea>
             </div>
             <div>
-	            <input class="float-left" formaction="/test" type="submit" id="test" value="Test">
-	            <input class="float-right" type="submit" id="prompt" value="Setup" disabled>
-	        </div>
+                    <input class="float-left" formaction="/test" type="submit" id="test" value="Test">
+                    <input class="float-right" formaction="/setup" type="submit" id="prompt" value="Setup">
+                </div>
         </form>
     {% else %}
         <h2>PyGoPhish - Please sign in to go phish.</h2>
         <a href="{% url 'signin' %}" class="btn btn-primary btn-large">Click here to sign in</a>
     {% endif %}
     </div>
+{% endblock %}
+{% block postcript %}
+    <script src="{% static 'initSetup.js' %}" type="text/javascript"></script>
 {% endblock %}

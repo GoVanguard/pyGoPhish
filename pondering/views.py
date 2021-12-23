@@ -63,20 +63,42 @@ def goPhish(request):
 
 def emailSetup(request):
     context = initializeContext(request)
-    context = Email.getEmailContext(context)
+    phishingTrip = GoPhishing.PhishingTripInstance()
+    if request.method == 'GET':
+        context = Email.getEmailContext(request, context)
     if request.method == 'POST':
-        context = postEmailContext(request, context)
-        return HttpResponseRedirect(reverse('settings'))
+        context = Email.postEmailContext(request, context)
+        pk = context['Instance']
+        return HttpResponseRedirect('settings/{0}'.format(pk)) 
     return render(request, 'pondering/email.html', context=context)
 
 
 def emailTest(request):
     context = initializeContext(request)
-    context = Email.getEmailContext(context)
     if request.method == 'POST':
         context = Email.postEmailContext(request, context)
-        return Email.generateTestEmailSMTP(request, context)  
+        service = context['Service']
+        if service == 'SMTP':
+            return Email.emailSMTP(request, context)
+        if service == 'GRPH':
+            return Email.emailGRPH(request, context)
+        if service == 'O365':
+            return Email.emailO365(request, context)
     return render(request, 'pondering/email.html', context=context)
+
+
+def enumerate(request):
+    contxt = initializenContext(request)
+    context = Email.getEnumerateContext(context)
+    if request.method == 'POST':
+        context = Email.postEnumerateContext(context)
+        service = context['service']
+        if service == 'LinkedIn2Username':
+            return Email.enumerateLi2U(request, context)
+        if service == 'GraphIO':
+            return Email.enumerateGraphIO(request, context)
+        if service == 'SMTP':
+            return Email.enumerateSMTP(request, context)
 
 
 def schedule(request):

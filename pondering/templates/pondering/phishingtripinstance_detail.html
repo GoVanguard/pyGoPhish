@@ -1,11 +1,15 @@
 {% extends "pondering/layout.html" %}
-
+{% load static %}
+{% block head %}
+{% endblock %}
 {% block content %}
-  <div class="jumbotron">
-    <h1>Company: {{ object.trip.company.name }}</h1>
-    <p><strong>Point of Contact: </strong>{{ object.trip.company.poc.name }}</p>
-    <p><strong>Scheduling Status: </strong>{{ object.getSchedulingStatus }}</p>
-    <p><strong>Target: </strong><a href="{{ object.target }}">{{ object.target }}</a></p>
-    <p><strong>Event Date: </strong>{{ phishingtripinstance.datetime }}</p>
-  </div>
+    <div class="jumbotron">
+        {% if user.is_authenticated %}
+            <h1>Company: {{ object.trip.company.name }}</h1>
+            <p><strong>Point of Contact: </strong>{{ object.trip.company.poc.name }}</p>
+            <p><strong>Scheduling Status: </strong>{{ object.getSchedulingStatus }}</p>
+            <p><strong>Target: </strong><a href="{{ object.target }}">{{ object.target }}</a></p>
+            <p><strong>Event Date: </strong>{{ phishingtripinstance.datetime }}</p>
+        {% endif %}
+    </div>
 {% endblock content %}

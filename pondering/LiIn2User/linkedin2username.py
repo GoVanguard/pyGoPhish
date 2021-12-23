@@ -114,7 +114,7 @@ def parse_arguments():
                         'VERIFICATION. [example: "-p https://localhost:8080"]')
     parser.add_argument('-k', '--keywords', type=str, action='store',
                         default=False,
-                        help='Filter results by a a list of command separated '
+                        help='Filter results by a list of command separated '
                         'keywords. Will do a separate loop for each keyword, '
                         'potentially bypassing the 1,000 record limit. '
                         '[example: "-k \'sales,human resources,information '
@@ -616,6 +616,35 @@ def clean(raw_list):
             clean_list.append(name)
 
     return clean_list
+
+
+def write_list(company, address, name_list):
+    emails = []
+    period = '.'
+    for name in name_list:
+        parse = re.split(' |-', name)
+        if len(parse) > 2:
+            first, second, third, = parse[0], parse[-2], parse[-1]
+            emails.append('{0}{1}{2}'.format(first[0], second, address))
+            emails.append('{0}{1}{2}'.format(first[0], third, address))
+            emails.append('{0}{1}{2}{3}'.format(first[0], period, second, address))
+            emails.append('{0}{1}{2}{3}'.format(first[0], period, third, address))
+            emails.append('{0}{1}{2}'.format(second, first[0], address))
+            emails.append('{0}{1}{2}'.format(third, first[0], address))
+            emails.append('{0}{1}{2}{3}'.format(first, period, second, address))
+            emails.append('{0}{1}{2}i{3}'.format(first, period, third, address))
+            emails.append('{0}{1}{2}'.format(first, second[0], address))
+            emails.append('{0}{1}{2}'.format(first, third[0], address))
+            emails.append('{0}{1}'.format(first, address))
+        else:
+            first, last = parse[0], parse[-1]
+            emails.append('{0}{1}{2}'.format(first[0], last, address))
+            emails.append('{0}{1}{2}{3}'.format(first[0], period, last, address))
+            emails.append('{0}{1}{2}'.format(last, first[0], address))
+            emails.append('{0}{1}{2}{3}'.format(first, period, last, address))
+            emails.append('{0}{1}{2}'.format(first, last[0], address))
+            emails.append('{0}{1}'.format(first, address))
+    return emails
 
 
 def write_files(company, domain, name_list):

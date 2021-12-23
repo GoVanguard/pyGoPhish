@@ -34,17 +34,37 @@ def getMyMail(token):
 
     return mail.json()
 
-def sendMail(token, subject, body, toRecipients, ccRecipients):
+def sendMail(token, subject, message, toRecipients, efrom, ccRecipients = ''):
     # Set headers
     headers = {
-            'Authorization': 'Bearer {0}'.format(token),
-            'Content-type': 'application/json'
+        'Authorization': 'Bearer {0}'.format(token),
+        'Content-type': 'application/json'
     }
 
-    # Configure query parameters to modify the results
-    queryParams = {
-        '$orderby': 'receivedDateTime'
-    }
+    email = {
+    	"message": {
+        	"subject": "Meet for lunch?",
+            "body": {
+                "contentType": "Text",
+                "content": "The new cafeteria is open."
+             },
+            "toRecipients": [
+                {
+                    "emailAddress": {
+                      "address": "jadams@govanguard.com"
+                    }
+                }
+            ],
+            "ccRecipients": [
+                {
+                    "emailAddress": {
+                        "address": "jadams@govanguard.com"
+                    }
+                }
+            ]
+        },
+        "saveToSentItems": "false"
+    } 
 
     # Send get to the appropriate user
     body = {
@@ -52,14 +72,26 @@ def sendMail(token, subject, body, toRecipients, ccRecipients):
                     "subject": subject,
                     "body": {
                         "contentType": "Text",
-                        "content": body
+                        "content": message 
                     },
-                "toRecipients": toRecipients,
-                "ccRecipients": ccRecipients,
+                "toRecipients": sendMailHelper(toRecipients), 
+                        
+                "ccRecipients": sendMailHelper(ccRecipients)
                 },
                 "saveToSentItems": "false"
             }
     response = requests.post('{0}/me/sendMail'.format(graphURL),
         headers = headers,
-        body = body)
+        data = email)
     return response
+
+def sendMailHelper(toEmailList):
+    returnList = []
+    if type(toEmailList) == list:
+        for email in toEmailList:
+            returnList.append({"emailAddress":{"address": email}})
+    elif type(toEmailList) == str and toEmailList:
+        returnList = [{"emailAddress":{"address": toEmailList}}]
+    else:
+        returnList = [{"emailAddress":{"address": "info@example.com"}}]
+    return returnList

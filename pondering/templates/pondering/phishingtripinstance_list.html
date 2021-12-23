@@ -1,28 +1,33 @@
 {% extends "pondering/layout.html" %}
+{% load static %}
+{% block head %}
+{% endblock %}
 {% block content %}
 <div class="jumbotron">
-    <h1>Phishing Trip List</h1>
-    {% if object_list %}
-    <table class="table">
-        <tr>
-          <th scope="col">Scheduling Status</th>
-          <th scope="col">Operational Status</th>
-          <th scope="col">Campaign Setup</th>
-          <th scope="col">Company</th>
-          <th scope="col">Time</th>
-        </tr>
-        {% for tripinst in object_list %}
-          <tr>
-	    <th scope="row">{{ tripinst.getSchedulingStatus }}</th>
-            <td>{{ tripinst.getOperationalStatus }}</td>
-	    <td><a href="{{ tripinst.getAbsoluteURL }}">Settings</a></td>
-            <td>{{ tripinst.trip.company.name }}</td>
-            <td>{{ tripinst.datetime }}</td>
-          </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-        <p>There are no phishing trips scheduled.</p>
+    {% if user.is_authenticated %}
+        <h1>Phishing Trip List</h1>
+        {% if object_list %}
+        <table class="table">
+            <tr>
+              <th scope="col">Scheduling Status</th>
+              <th scope="col">Operational Status</th>
+              <th scope="col">Campaign Setup</th>
+              <th scope="col">Company</th>
+              <th scope="col">Time</th>
+            </tr>
+            {% for tripinst in object_list %}
+              <tr>
+                <th scope="row">{{ tripinst.getSchedulingStatus }}</th>
+                <td>{{ tripinst.getOperationalStatus }}</td>
+                <td><a href="/setup?id={{tripinst.id}}">Setup</a></td>
+                <td>{{ tripinst.trip.company.name }}</td>
+                <td>{{ tripinst.datetime }}</td>
+              </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+            <p>There are no phishing trips scheduled.</p>
+        {% endif %}
     {% endif %}
 </div>
 {% endblock %}

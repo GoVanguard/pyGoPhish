@@ -3,6 +3,16 @@ import msal
 import os
 import time
 
+class args:
+    username = ''
+    password = ''
+    company = ''
+    proxy = False
+    geoblast = False
+    depth = False
+    keywords = False
+    sleep = 0
+
 class AuthHelper:
     # Load the oauthsettings.yml file
     stream = open('oauthsettings.yml', 'r')
@@ -23,9 +33,9 @@ class AuthHelper:
     def getMSALApp(cache=None):
         # Initialize the MSAL confidential client
         authApp = msal.ConfidentialClientApplication(
-            AuthHelper.settings['app_id'],
+            AuthHelper.settings['client_id'],
             authority=AuthHelper.settings['authority'],
-            client_credential=AuthHelper.settings['app_secret'],
+            client_credential=AuthHelper.settings['client_secret'],
             token_cache=cache
         )
         return authApp
@@ -47,6 +57,13 @@ class AuthHelper:
         result = authApp.acquire_token_by_auth_code_flow(flow, request.GET)
         AuthHelper.saveCache(request, cache)
         return result
+
+    def getLi2UserCredentials():
+        creds = args()
+        creds.username = AuthHelper.settings['linkedin_username']
+        creds.password = AuthHelper.settings['linkedin_password']
+        creds.proxy = False
+        return creds
 
     def storeUser(request, user):
         try:
@@ -71,8 +88,9 @@ class AuthHelper:
             AuthHelper.saveCache(request, cache)
         return result['access_token']
 
-    def removeUserAndToken(self, request):
+    def removeUserAndToken(request):
         if 'token_cache' in request.session:
             del request.session['token_cache']
         if 'user' in request.session:
             del request.session['user']
+
