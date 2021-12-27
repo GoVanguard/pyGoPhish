@@ -106,6 +106,7 @@ class PhishingTrip(models.Model):
 
 class TargetEmailAddress(models.Model):
     """Model for storing a target e-mail address."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4(), help_text='Unique ID for this particular e-mail address.')
     email = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you are sending an e-mali to.')
 
     def getEmail(self):
@@ -116,6 +117,7 @@ class TargetEmailAddress(models.Model):
 class PhishingList(models.Model):
     """Model for collecting a list of target e-mail addresses."""
     phishingList = models.ForeignKey('targetemailaddress', on_delete=models.RESTRICT, null=True, help_text='List of potential e-mail addresses.')
+
 
 
 class PhishingEmail(models.Model):

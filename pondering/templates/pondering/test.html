@@ -5,13 +5,13 @@
 {% block content %}
     <div class="jumbotron">
     {% if user.is_authenticated %}
-        {% if emails %}
+        {% if Targets %}
             <form action="/test" id="emails" method="post">
                 {% csrf_token %}
                 <ul class="list-group">
                     <li class="list-group-item active"><span class="strong float-left">Email Address</span><span class="strong float-right">Modify</span></li>
-                {% for email in emails %}
-                    <li class="list-group-item">{{ email }}<button formaction="delEmail" class="btn btn-danger float-right">Delete</button></li>
+                {% for target in Targets %}
+                    <li class="list-group-item">{{ target }}<button id="{{ Ids.forloop.counter }}" formaction="/delEmail" class="btn btn-danger float-right">Delete</button></li>
                 {% endfor %}
                 </ul>
             </form>

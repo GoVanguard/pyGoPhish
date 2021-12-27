@@ -3,6 +3,7 @@ import msal
 import os
 import time
 
+
 class args:
     username = ''
     password = ''
@@ -12,6 +13,7 @@ class args:
     depth = False
     keywords = False
     sleep = 0
+
 
 class AuthHelper:
     # Load the oauthsettings.yml file
@@ -40,6 +42,7 @@ class AuthHelper:
         )
         return authApp
 
+
     # Method to generate a sign-in flow
     def getSignInFlow():
         authApp = AuthHelper.getMSALApp()
@@ -47,6 +50,7 @@ class AuthHelper:
             AuthHelper.settings['scopes'],
             redirect_uri=AuthHelper.settings['redirect']
         )
+
 
     # Method to exchange auth code for access token
     def getTokenFromCode(request):
@@ -58,12 +62,14 @@ class AuthHelper:
         AuthHelper.saveCache(request, cache)
         return result
 
+
     def getLi2UserCredentials():
         creds = args()
         creds.username = AuthHelper.settings['linkedin_username']
         creds.password = AuthHelper.settings['linkedin_password']
         creds.proxy = False
         return creds
+
 
     def storeUser(request, user):
         try:
@@ -75,6 +81,7 @@ class AuthHelper:
             }
         except Exception as e:
             print(e)
+
 
     def getToken(request):
         cache = AuthHelper.loadCache(request)
@@ -88,9 +95,9 @@ class AuthHelper:
             AuthHelper.saveCache(request, cache)
         return result['access_token']
 
+
     def removeUserAndToken(request):
         if 'token_cache' in request.session:
             del request.session['token_cache']
         if 'user' in request.session:
             del request.session['user']
-

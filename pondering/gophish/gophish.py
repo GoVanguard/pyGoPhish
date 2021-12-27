@@ -11,7 +11,8 @@ from pondering.models import GoPhishing
 
 # Django framework error imports
 from django.core.exceptions import FieldError
-from django.db.utils import IntegrityError
+from django.db.utils import IntegrityError, OperationalError
+
 
 
 class GoPhish:
@@ -120,16 +121,22 @@ class GoPhish:
         trip = None
         try:
             trip = GoPhishing.PhishingTrip.objects.filter(company__name__iexact=company).filter(owner__name__iexact=owner).filter(company__poc__name__iexact=poc)
+        except OperationalError as exc:
+            logging.error('The phishing trip table does not exist {0}'.format(exc))
+            logging.info('Stop the server, delete the db.sqliteX database file, delete all the migrations folders and files inside all Django applications, run python manage.py makemigrations, run python manage.py migrate, run python manage.py makemigrations appname, and finally run python manage.py migrate appname. This should resolve the operational error that generates no such table for your application.')
+            trip = GoPhish.createPhishingTrip(company, poc, owner)
         except FieldError as exc:
             logging.error('No phishing trips exist: {0}'.format(exc))
             logging.info('Generating first phishing trip.')
             trip = GoPhish.createPhishingTrip(company, poc, owner)
         else:
+            logging.info('No exception triggered in filterPhishingTrip')
             result = trip.first()
             if result is None:
+                logging.warning('Result is none in filterPhishingTrip')
                 trip = GoPhish.createPhishingTrip(company, poc, owner)
             else:
-                trip = trip.first()
+                trip = result 
         finally:
             trip.save()
             return trip
@@ -235,7 +242,7 @@ class GoPhish:
 
     def createPhishingTripInstance(trip, pond, target, time):
         tripInstance = GoPhishing()
-        tripInstance.target_id = uuid.uuid4()
+        tripInstance.id = uuid.uuid4()
         tripInstance.trip = trip
         tripInstance.pond = pond
         tripInstance.target = target

@@ -69,7 +69,7 @@ def emailSetup(request):
     if request.method == 'POST':
         context = Email.postEmailContext(request, context)
         pk = context['Instance']
-        return HttpResponseRedirect('settings/{0}'.format(pk)) 
+        return HttpResponseRedirect('settings/{0}'.format(pk))
     return render(request, 'pondering/email.html', context=context)
 
 
@@ -84,7 +84,6 @@ def emailTest(request):
             return Email.emailGRPH(request, context)
         if service == 'O365':
             return Email.emailO365(request, context)
-    return render(request, 'pondering/email.html', context=context)
 
 
 def enumerate(request):
@@ -121,6 +120,16 @@ def signOut(request):
     AuthHelper.removeUserAndToken(request)
     # Return the user to the home page
     return HttpResponseRedirect(reverse('home'))
+
+
+class PhishingListView(generic.ListView):
+    # Set the model for the generic.ListView object template
+    model = GoPhishing.PhishingList
+
+    def get_queryset(self):
+       """Abstract template function that populates the list based on the specified phishing trip."""
+       # Return a list of the emails associated with a Phishing Trip Instance
+       return GoPhishing.PhishingList.objects.all() 
 
 
 class PhishingTripListView(generic.ListView):

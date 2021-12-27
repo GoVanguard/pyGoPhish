@@ -12,7 +12,7 @@ urlpatterns = [
     path('callback', views.callback, name='callback'),
     path('gophish', views.goPhish, name='gophish'),
     path('setup', views.emailSetup, name='setup'),
-    path('test', views.emailTest, name='test'),
+    path('test', views.PhishingListView.as_view(), name='test'),
     path('schedule', views.PhishingTripListView.as_view(), name='schedule'),
     path('settings/<slug:pk>', views.PhishingTripDetailView.as_view(), name='schedule-detail'),
 ]
