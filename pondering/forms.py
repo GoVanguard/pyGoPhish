@@ -128,6 +128,19 @@ class DomainNarrative(forms.Form):
         min_length=4,
         max_length=4,
     )
+    LINKED_IN = 'LI2U'
+    GRAPH_IO = 'GRIO'
+    GOVANGUARD = 'GOVD'
+    ENUMERATION_CHOICES = [
+        (LINKED_IN, 'LinkedIn2Username'),
+        (GRAPH_IO, 'Graph IO'),
+        (GOVANGUARD, 'GoVanguard Email Enumeration'),
+    ]
+    enumeration = forms.CharField(
+        label='Enumerate',
+        min_length=4,
+        max_length=4,
+    ) 
     phishingtrip = forms.UUIDField(label='id', required=True)
     domain = forms.URLField(label='domain', required=False, max_length=2048)
     efrom = forms.EmailField(label='efrom', max_length=320)
@@ -144,6 +157,10 @@ class DomainNarrative(forms.Form):
     def clean_service(self):
         data = self.cleaned_data['service']
         return [choice[0] for choice in self.SERVICE_CHOICES if data == choice[0]][0]
+
+    def clean_enumeration(self):
+        data = self.cleaned_data['enumeration']
+        return data
 
     def clean_domain(self):
         data = self.cleaned_data['domain']

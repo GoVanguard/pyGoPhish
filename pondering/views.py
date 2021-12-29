@@ -1,22 +1,35 @@
+"""Router for PyGoPhish WSGI application."""
+# Built-in imports
 import logging
 import uuid
 import time
 import pprint
-from dns import resolver
+from dateutil import tz, parser
 from smtplib import SMTP
 from smtplib import SMTPException
 from smtplib import SMTPConnectError
-from dateutil import tz, parser
+
+# Django Web Application Framework imports
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render, redirect
 from django.views import generic
-from pondering.models import GoPhishing
-from pondering.gophish.gophish import GoPhish
-from pondering.email.email import Email
+
+# Dnspython imports
+from dns import resolver
+
+# LinkedIn2Username imports
+from pondering.LiIn2User import linkedin2username
+
+# PyGoPhish imports
+from pondering import models 
+from pondering.gophish import gophish 
+from pondering.email import email 
 from pondering.authhelper import AuthHelper 
-from pondering.graphhelper import getUser  
+from pondering.graphhelper import getUser
+from pondering.enumeration import enumeration
+
 
 def root(request):
     # Redirect clients accessing the service from a non-standard path.
@@ -54,22 +67,22 @@ def signIn(request):
 
 def goPhish(request):
     context = initializeContext(request)
-    context = GoPhish.getPhishingContext(context)
+    context = gophish.getPhishingContext(context)
     if request.method == 'POST':
-        context = GoPhish.postPhishingContext(request, context)
+        context = gophish.postPhishingContext(request, context)
         return HttpResponseRedirect(reverse('schedule'))
     return render(request, 'pondering/gophish.html', context=context)
 
 
 def emailSetup(request):
     context = initializeContext(request)
-    phishingTrip = GoPhishing.PhishingTripInstance()
+    phishingTrip = models.PhishingTripInstance()
     if request.method == 'GET':
-        context = Email.getEmailContext(request, context)
+        context = email.getEmailContext(request, context)
     if request.method == 'POST':
-        context = Email.postEmailContext(request, context)
+        context = email.postEmailContext(request, context)
         pk = context['Instance']
-        return HttpResponseRedirect('settings/{0}'.format(pk))
+        return HttpResponseRedirect('enumerate?id={0}'.format(pk))
     return render(request, 'pondering/email.html', context=context)
 
 
@@ -79,25 +92,24 @@ def emailTest(request):
         context = Email.postEmailContext(request, context)
         service = context['Service']
         if service == 'SMTP':
-            return Email.emailSMTP(request, context)
+            context = Email.emailSMTP(request, context)
+            return render(request, 'pondering/test.html', context=context)
         if service == 'GRPH':
-            return Email.emailGRPH(request, context)
+            context = Email.emailGRPH(request, context)
+            return render(request, 'pondering/test.html', context=context)
         if service == 'O365':
-            return Email.emailO365(request, context)
+            context = Email.emailO365(request, context)
+            return render(request, 'pondering/test.html', context=context)
 
 
 def enumerate(request):
-    contxt = initializenContext(request)
-    context = Email.getEnumerateContext(context)
+    context = initializeContext(request)
+    if request.method == 'GET':
+        context = enumeration.getEnumerationContext(request, context) 
+        return render(request, 'pondering/enumerate.html', context)
     if request.method == 'POST':
-        context = Email.postEnumerateContext(context)
-        service = context['service']
-        if service == 'LinkedIn2Username':
-            return Email.enumerateLi2U(request, context)
-        if service == 'GraphIO':
-            return Email.enumerateGraphIO(request, context)
-        if service == 'SMTP':
-            return Email.enumerateSMTP(request, context)
+        context = Email.postEnumerateContext(request, context)
+        return render(request, 'pondering/enumerate.html', context) 
 
 
 def schedule(request):
@@ -124,23 +136,23 @@ def signOut(request):
 
 class PhishingListView(generic.ListView):
     # Set the model for the generic.ListView object template
-    model = GoPhishing.PhishingList
+    model = models.PhishingList
 
     def get_queryset(self):
        """Abstract template function that populates the list based on the specified phishing trip."""
        # Return a list of the emails associated with a Phishing Trip Instance
-       return GoPhishing.PhishingList.objects.all() 
+       return models.PhishingList.objects.all() 
 
 
 class PhishingTripListView(generic.ListView):
     # Set the model for the generic.ListView object template
-    model = GoPhishing.PhishingTripInstance
+    model = models.PhishingTripInstance
 
     def get_queryset(self):
         """Abstract template function that populates the list."""
         # Return a list of Phishing Trip Instances
-        return GoPhishing.PhishingTripInstance.objects.all()
+        return models.PhishingTripInstance.objects.all()
 
 
 class PhishingTripDetailView(generic.DetailView):
-    model = GoPhishing.PhishingTripInstance 
+    model = models.PhishingTripInstance 

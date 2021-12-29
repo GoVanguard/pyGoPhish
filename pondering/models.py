@@ -136,6 +136,20 @@ class PhishingEmail(models.Model):
         blank=True,
         help_text='Service providing the mail exchange server.'
     )
+    LINKED_IN = 'LI2U'
+    GRAPH_IO = 'GRIO'
+    GOVANGUARD = 'GOVD'
+    ENUMERATION_CHOICES = [
+        (LINKED_IN, 'LinkedIn2Username'),
+        (GRAPH_IO, 'Graph IO'),
+        (GOVANGUARD, 'GoVanguard Email Enumeration'),
+    ]
+    enumeration = models.CharField(
+        max_length=4,
+        null=True,
+        blank=True,
+        help_text='Service providing the email enumeration service.'
+    )
     domain = models.URLField(max_length=2048, null=True, blank=True, help_text='The location to launch a phishing campaign from.')
     efrom = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you are sending an e-mail from.')
     to = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you want to preview the e-mail in.')
@@ -205,19 +219,3 @@ class PhishingTripInstance(models.Model):
     def getAbsoluteURL(self):
         """Returns the URL to access phishing trip details."""
         return 'settings/{0}'.format(self.id)
-
-
-class GoPhishing(PhishingTripInstance):
-    PhishingTripInstance = PhishingTripInstance
-    PointOfContact = PointOfContact
-    Company = Company
-    Owner = Owner
-    PhishingWebsite = PhishingWebsite
-    TargetWebsite = TargetWebsite
-    PhishingTrip = PhishingTrip
-    TargetEmailAddress = TargetEmailAddress
-    PhishingList = PhishingList
-    PhishingEmail = PhishingEmail
-
-    class Meta:
-        proxy = True

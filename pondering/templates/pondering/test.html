@@ -5,17 +5,26 @@
 {% block content %}
     <div class="jumbotron">
     {% if user.is_authenticated %}
-        {% if Targets %}
-            <form action="/test" id="emails" method="post">
-                {% csrf_token %}
-                <ul class="list-group">
-                    <li class="list-group-item active"><span class="strong float-left">Email Address</span><span class="strong float-right">Modify</span></li>
-                {% for target in Targets %}
-                    <li class="list-group-item">{{ target }}<button id="{{ Ids.forloop.counter }}" formaction="/delEmail" class="btn btn-danger float-right">Delete</button></li>
+        {% if report.items %}
+            <ol>
+            {% for key, values in report.items %}
+                <li><strong>{{ key }}</strong></li>
+                {% for key, value in values.items %}
+                    <ul>
+                        <li><strong>{{ key }}:</strong> {{ value }}</li>
+                    </ul>
                 {% endfor %}
-                </ul>
-            </form>
+            {% endfor %}
+            </ol>
+        {% else %}
+        <div class="w-100 h-100">
+            <p class="text-center">No renderable report found.</p>
+        </div>
         {% endif %}
+        <div>
+            <a href="setup?id={{ Instance }}"><button class="btn btn-secondary float-left" id="reset" value="reset">Reset</button></a>
+            <a href="enumerate?id={{ Instance }}"><button class="btn btn-primary float-right" id="enumerate" value="enumerate">Enumerate</button></a>
+        </div>
     {% else %}
         <h2>PyGoPhish - Please sign in to go phish.</h2>
         <a href="{% url 'signin' %}" class="btn btn-primary btn-large">Click here to sign in</a>

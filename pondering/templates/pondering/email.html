@@ -4,10 +4,10 @@
     <script src="{% static 'validateSetup.js' %}" type="text/javascript"></script>
 {% endblock %}
 {% block content %}
-    <div class="jumbotron">
+<div class="jumbotron">
     {% if user.is_authenticated %}
         <p class="lead" id="userPrompt">Draft and test phishing campaign narratives here.</p>
-        <form action="/setup" id="form" method="post">
+	<form action="/setup?={{ phishingTrip }}" id="form" method="post">
             {% csrf_token %}
             <div>
                 <div>
@@ -17,13 +17,21 @@
                     <input type="text" id="phishingtrip" name="phishingtrip" value="{{ phishingTrip }}">
                 </div>
                 <strong>
-                    <label for="service">Service: </label>
+                    <label for="service">E-mail Service: </label>
                 </strong>
                 <select type="select" id="service" name="service">
                     <option value="SMTP">SMTP</option>
                     <option value="GRPH">MS Graph</option>
                     <option value="O365">Office 365</option>
                 </select>
+		<strong>
+			<label for="enumeration">Enumeration Service: </label>
+		</strong>
+		<select type="select" id="enumeration" name="enumeration">
+			<option value="LI2U">LinkedIn</option>
+			<option value="GRIO">GraphIO</option>
+			<option value="GOVD">GoVanguard</option>
+		</select>
                 <span id="optional-domain" hidden="true">
                         <strong>
                                 <label for="domain">Host Domain: </label>
@@ -61,9 +69,9 @@
                 <textarea class="fit-content input" type="text" id="body" name="body" rows="10" cols="100" required>{{ body }}</textarea>
             </div>
             <div>
-                    <input class="float-left" formaction="/test" type="submit" id="test" value="Test">
-                    <input class="float-right" formaction="/setup" type="submit" id="prompt" value="Setup">
-                </div>
+		    <input class="btn btn-primary float-left" formaction="/test?id={{ phishingTrip }}" type="submit" id="test" value="Test">
+		    <input class="btn btn-primary float-right" type="submit" id="enumerate" value="Enumerate">
+            </div>
         </form>
     {% else %}
         <h2>PyGoPhish - Please sign in to go phish.</h2>
