@@ -203,3 +203,15 @@ class DomainNarrative(forms.Form):
         # TODO: Write a method to check for and remove special characters and reduce white space.
 
         return data
+
+
+class CompanyProfile(forms.Form):
+    """Form for filtering information related to the target company."""
+    company = forms.CharField(label='company', max_length=200)
+
+    def clean_company(self):
+        data = self.cleaned_data['company']
+        
+        # TODO: Write a method to check for and remove special characters and reduce white space.
+        
+        return data

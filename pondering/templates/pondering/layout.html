@@ -34,12 +34,15 @@
               <li class="nav-item" data-turbolinks="false">
                 <a class="nav-link{% if request.resolver_match.view_name == 'gophish' %} active{% endif %}" href="{% url 'gophish' %}">GoPhish</a>
               </li>
-	      <li class="nav-item" data-turbolinks="false">
+              <li class="nav-item" data-turbolinks="false">
                 <a class="nav-link{% if request.resolver_match.view_name == 'schedule' %} active{% endif %}" href="{% url 'schedule' %}">Schedule</a>
               </li>
-	      <li class="nav-item" data-turbolinks="false">
-		<a class="nav-link{% if request.resolver_match.view_name == 'setup' %} active{% endif %}" href="{% url 'setup' %}">Setup</a>
-	      </li>
+              <li class="nav-item" data-turbolinks="false">
+                <a class="nav-link{% if request.resolver_match.view_name == 'setup' %} active{% endif %}" href="{% url 'setup' %}">Setup</a>
+              </li>
+              <li class="nav-item" data-turoblinks="false">
+                <a class="nav-link{% if request.resolver_match.view_name == 'enumerate' %} active{% endif %}" href="{% url 'enumerate' %}">Enumerate</a>
+              </li>
             {% endif %}
           </ul>
           <ul class="navbar-nav justify-content-end">
@@ -86,12 +89,7 @@
       {% endif %}
       {% block content %}{% endblock %}
     </main>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
-      integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
-      crossorigin="anonymous"></script>
-  </body>
-  {% block postcript %}
+  {% block postscript %}
   {% endblock %}
+  </body>
 </html>

@@ -1,7 +1,7 @@
 {% extends "pondering/layout.html" %}
 {% load static %}
 {% block head %}
-    <script src="{% static 'validateSetup.js' %}" type="text/javascript"></script>
+    <script src="{% static 'pondering/validateSetup.js' %}" type="text/javascript"></script>
 {% endblock %}
 {% block content %}
 <div class="jumbotron">
@@ -10,7 +10,7 @@
 	<form action="/setup?={{ phishingTrip }}" id="form" method="post">
             {% csrf_token %}
             <div>
-                <div>
+                <div hidden>
                     <strong>
                         <label for="phishingtrip">Phishing Trip: </label>
                     </strong>
@@ -79,6 +79,6 @@
     {% endif %}
     </div>
 {% endblock %}
-{% block postcript %}
-    <script src="{% static 'initSetup.js' %}" type="text/javascript"></script>
+{% block postscript %}
+    <script src="{% static 'pondering/initSetup.js' %}" type="text/javascript"></script>
 {% endblock %}

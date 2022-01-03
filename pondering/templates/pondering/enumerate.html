@@ -1,23 +1,39 @@
 {% extends "pondering/layout.html" %}
 {% load static %}
 {% block head %}
-    <script src="{% static 'validateCompany.js' %}" type="text/javascript"></script>
+    <script src="{% static 'pondering/lookupCompany.js' %}" type="text/javascript"></script>
 {% endblock %}
 {% block content %}
-    <div class="jumobotron">
-        {% if user.is_authenticated %}
-            {% if LI2U %}
-                <p class="lead" id="userPrompt">Search for companies registered with LinkedIn.</p>
-                <form action="/enumerate" id="form" method="post">
-                    {% csrf_token %}
-                        <div>
-                            <strong>
-                                <label for="company">LinkedIn Company Name: </label>
-                            </strong>
-                            <input type="text" id="company" name="company" value="{{ company }}">
-                        </div>
-                </form>
-            {% endif %}
+<div class="jumbotron">
+    {% if user.is_authenticated %}
+        {% if LI2U %}
+            <p class="lead" id="userPrompt">Search for companies registered with LinkedIn.</p>
+            <form action="/enumerate" id="form" method="post">
+                {% csrf_token %}
+                    <div>
+                        <strong>
+                            <label for="company">LinkedIn Company Name: </label>
+                        </strong>
+                        <input type="text" id="company" name="company" value="{{ company }}">
+                    </div>
+                    <div>
+                        <input class="btn btn-primary float-right" type="submit" id="submit" value="Accept"> 
+                    </div>
+             </form>
         {% endif %}
-    </div>
+        {% if CompanyId %}
+            <p class='strong' id='name' name='name'>LinkedIn Registered Name: {{ Company }}</p>
+            <p class='strong' id='id' name='id'>LinkedIn Company Id: {{ CompanyId }}</p>
+            <p class='strong' id='count' name='count'>LinkedIn Staff Count: {{ StaffCount }}</p>
+        {% else %}
+            <p class='strong' id='name' name='name' hidden>LinkedIn Registered Name: {{ Company }}</p>
+            <p class='strong' id='id' name='id' hidden>LinkedIn Company Id: {{ CompanyId }}</p>
+            <p class='strong' id='count' name='count' hidden>LinkedIn Staff Count: {{ StaffCount }}</p>
+            <p class='strong' id='error' name='error'>This business has not registered with LinkedIn or is hiding corporate information from reconaissance.</p>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+{% block postscript %}
+    <script src="{% static 'pondering/initEnumerate.js' %}" type="text/javascript"></script>
 {% endblock %}

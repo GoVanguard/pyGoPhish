@@ -15,6 +15,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render, redirect
 from django.views import generic
+from rest_framework.decorators import api_view
 
 # Dnspython imports
 from dns import resolver
@@ -26,7 +27,7 @@ from pondering.LiIn2User import linkedin2username
 from pondering import models 
 from pondering.gophish import gophish 
 from pondering.email import email 
-from pondering.authhelper import AuthHelper 
+from pondering import authhelper 
 from pondering.graphhelper import getUser
 from pondering.enumeration import enumeration
 
@@ -102,13 +103,14 @@ def emailTest(request):
             return render(request, 'pondering/test.html', context=context)
 
 
+@api_view(['GET','POST'])
 def enumerate(request):
     context = initializeContext(request)
     if request.method == 'GET':
         context = enumeration.getEnumerationContext(request, context) 
         return render(request, 'pondering/enumerate.html', context)
     if request.method == 'POST':
-        context = Email.postEnumerateContext(request, context)
+        context = enumeration.postEnumerationContext(request, context)
         return render(request, 'pondering/enumerate.html', context) 
 
 
@@ -138,6 +140,10 @@ class PhishingListView(generic.ListView):
     # Set the model for the generic.ListView object template
     model = models.PhishingList
 
+    def get_context_data(self):
+        context = initializeContext(self.request)
+        return context
+
     def get_queryset(self):
        """Abstract template function that populates the list based on the specified phishing trip."""
        # Return a list of the emails associated with a Phishing Trip Instance
@@ -148,6 +154,32 @@ class PhishingTripListView(generic.ListView):
     # Set the model for the generic.ListView object template
     model = models.PhishingTripInstance
 
+    def get_context_data(self, *, object_list=None, **kwargs):
+        """Get the context for this view."""
+        queryset = object_list if object_list is not None else self.object_list
+        page_size = self.get_paginate_by(queryset)
+        context_object_name = self.get_context_object_name(queryset)
+        if page_size:
+            paginator, page, queryset, is_paginated = self.paginate_queryset(queryset, page_size)
+            context = {
+                'paginator': paginator,
+                'page_obj': page,
+                'is_paginated': is_paginated,
+                'object_list': queryset
+            }
+        else:
+            context = {
+                'paginator': None,
+                'page_obj': None,
+                'is_paginated': False,
+                'object_list': queryset
+            }
+        if context_object_name is not None:
+            context[context_object_name] = queryset
+        context.update(kwargs)
+        context.update(initializeContext(self.request))
+        return super().get_context_data(**context)
+
     def get_queryset(self):
         """Abstract template function that populates the list."""
         # Return a list of Phishing Trip Instances
@@ -156,3 +188,30 @@ class PhishingTripListView(generic.ListView):
 
 class PhishingTripDetailView(generic.DetailView):
     model = models.PhishingTripInstance 
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        """Get the context for this view."""
+        queryset = object_list if object_list is not None else self.object_list
+        page_size = self.get_paginate_by(queryset)
+        context_object_name = self.get_context_object_name(queryset)
+        if page_size:
+            paginator, page, queryset, is_paginated = self.paginate_queryset(queryset, page_size)
+            context = {
+                'paginator': paginator,
+                'page_obj': page,
+                'is_paginated': is_paginated,
+                'object_list': queryset
+            }
+        else:
+            context = {
+                'paginator': None,
+                'page_obj': None,
+                'is_paginated': False,
+                'object_list': queryset
+            }
+        if context_object_name is not None:
+            context[context_object_name] = queryset
+        context.update(kwargs)
+        context.update(initializeContext(self.request))
+        return super().get_context_data(**context)
+

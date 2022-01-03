@@ -35,7 +35,7 @@ def postPhishingContext(request, context):
         trip = filterPhishingTrip(data['company'], data['poc'], data['owner'])
         pond = filterPhishingWebsite(data['phishingwebsite'])
         target = filterTargetWebsite(data['targetwebsite'])
-        targets = filterTargets(data['targets'])
+        targets = data['targets']
         time = data['datetime']
         filterPhishingTripInstance(trip, pond, target, targets, time)
         context.update(data)
@@ -50,16 +50,16 @@ def filterPhishingWebsite(url):
     """Phishing website duplication filter."""
     location = None
     try:
-        location = GoPhishing.PhishingWebsite.objects.filter(url__iexact=url)
+        location = models.PhishingWebsite.objects.filter(url__iexact=url)
     except FieldError as exc:
         logging.error('No phishing websites exist: {0}'.format(exc))
         logging.info('Generating first phishing website: {0}'.format(url))
-        location = GoPhishing.PhishingWebsite()
+        location = models.PhishingWebsite()
         location.url = url
     else:
         result = location.first()
         if result is None:
-            location = GoPhish.createPhishingWebsite(url)
+            location = createPhishingWebsite(url)
         else:
             location = result
     finally:
@@ -71,16 +71,16 @@ def filterTargetWebsite(url):
     """Target website duplication filter."""
     location = None 
     try:
-        location = GoPhishing.TargetWebsite.objects.filter(url__iexact=url)
+        location = models.TargetWebsite.objects.filter(url__iexact=url)
     except FieldError as exc:
         logging.error('No target websites exist: {0}'.format(exc))
         logging.info('Generating first target website.')
-        location = GoPhishing.TargetWebsite()
+        location = models.TargetWebsite()
         location.url = url
     else:
         result = location.first()
         if result is None:
-            location = GoPhish.createTargetWebsite(url)
+            location = createTargetWebsite(url)
         else:
             location = result
     finally:
@@ -91,25 +91,26 @@ def filterTargetWebsite(url):
 def filterPhishingTripInstance(trip, pond, target, targets, time):
     if targets:
         for tar in targets:
-            GoPhish.filterPhishingTripInstanceHelper(trip, pond, tar, time)
+            filterPhishingTripInstanceHelper(trip, pond, tar, time)
     if target:
-        GoPhish.filterPhishingTripInstanceHelper(trip, pond, target, time)
+        filterPhishingTripInstanceHelper(trip, pond, target, time)
 
-# TODO: Fix the time formatting so that you can query events based on time.
+# TODO: Fix time formatting so that you can query events based on time.
 def filterPhishingTripInstanceHelper(trip, pond, target, time):
     tripInstance = None
     try:
-        tripInstance = GoPhishing.objects.filter(pond__url__iexact=pond).filter(target__url__iexact=target)
+        tripInstance = models.PhishingTripInstance.objects.filter(pond__url__iexact=pond).filter(target__url__iexact=target)
     except FieldError as exc:
         logging.error('No phishing trip instances exist: {0}'.format(exc))
         logging.info('Generating first phishing trip instance.')
-        tripInstance = GoPhish.createPhishingTripInstance(trip, pond, target, targets, time)
+        tripInstance = createPhishingTripInstance(trip, pond, target, targets, time)
     except IntegrityError as exc:
         logging.error('A duplicate phishing trip exists: {0}'.format(exc))
     else:
         result = tripInstance.first()
         if result is None:
-            tripInstance = GoPhish.createPhishingTripInstance(trip, pond, target, time)
+            logging.warning('Result is none in filterPhishingTripInstanceHelper.')
+            tripInstance = createPhishingTripInstance(trip, pond, target, time)
             tripInstance.save()
 
 
@@ -120,17 +121,16 @@ def filterPhishingTrip(company, poc, owner):
     except OperationalError as exc:
         logging.error('The phishing trip table does not exist {0}'.format(exc))
         logging.info('Stop the server, delete the db.sqliteX database file, delete all the migrations folders and files inside all Django applications, run python manage.py makemigrations, run python manage.py migrate, run python manage.py makemigrations appname, and finally run python manage.py migrate appname. This should resolve the operational error that generates no such table for your application.')
-        trip = gophish.createPhishingTrip(company, poc, owner)
+        trip = createPhishingTrip(company, poc, owner)
     except FieldError as exc:
         logging.error('No phishing trips exist: {0}'.format(exc))
         logging.info('Generating first phishing trip.')
-        trip = gophish.createPhishingTrip(company, poc, owner)
+        trip = createPhishingTrip(company, poc, owner)
     else:
-        logging.info('No exception triggered in filterPhishingTrip')
         result = trip.first()
         if result is None:
-            logging.warning('Result is none in filterPhishingTrip')
-            trip = gophish.createPhishingTrip(company, poc, owner)
+            logging.warning('Result is none in filterPhishingTrip.')
+            trip = createPhishingTrip(company, poc, owner)
         else:
             trip = result 
     finally:
@@ -141,14 +141,15 @@ def filterPhishingTrip(company, poc, owner):
 def filterCompany(company, poc):
     c = None
     try:
-        c = GoPhishing.Company.objects.filter(name__iexact=company).filter(poc__name__iexact=poc)
-    except:
+        c = models.Company.objects.filter(name__iexact=company).filter(poc__name__iexact=poc)
+    except FieldError as exc:
         logging.error('No companies exist: {0}'.format(exc))
         logging.info('Generating first company.')
     else:
         result = c.first()
         if result is None:
-            c = GoPhish.createCompany(company, poc)
+            logging.warning('Result is none in filterCompany.')
+            c = createCompany(company, poc)
         else:
             c = result 
     finally:
@@ -159,15 +160,16 @@ def filterCompany(company, poc):
 def filterPointOfContact(name):
     poc = None
     try:
-        poc = GoPhishing.PointOfContact.objects.filter(name__iexact=name)
+        poc = models.PointOfContact.objects.filter(name__iexact=name)
     except:
         logging.error('No points of contact exist: {0}'.format(exc))
         logging.info('Generating first point of contact.')
-        poc = GoPhish.createPointOfContact(name)
+        poc = createPointOfContact(name)
     else:
         result = poc.first()
         if result is None:
-            poc = GoPhish.createPointOfContact(name)
+            logging.warning('Result is none in filterPointOfContact.')
+            poc = createPointOfContact(name)
         else:
             poc = result 
     finally:
@@ -178,15 +180,16 @@ def filterPointOfContact(name):
 def filterOwner(name):
     owner = None
     try:
-        owner = GoPhishing.Owner.objects.filter(name__iexact=name)
+        owner = models.Owner.objects.filter(name__iexact=name)
     except:
         logging.error('No points of contact exist: {0}'.format(exc))
         logging.info('Generating first point of contact.')
-        owner = GoPhish.createOwner(name)
+        owner = createOwner(name)
     else:
         result = owner.first()
         if result is None:
-            owner = GoPhish.createOwner(name)
+            logging.warning('Result is none in filterOwner.')
+            owner = createOwner(name)
         else:
             owner = result 
     finally:
@@ -194,50 +197,46 @@ def filterOwner(name):
         return owner
 
 
-def filterTargets(websites):
-    pass
-
-
 def createPointOfContact(name):
-    poc = GoPhishing.PointOfContact()
+    poc = models.PointOfContact()
     poc.name = name
     return poc
 
 
 def createCompany(company, poc):
-    c = GoPhishing.Company()
+    c = models.Company()
     c.name = company
-    c.poc = GoPhish.filterPointOfContact(poc)
+    c.poc = filterPointOfContact(poc)
     return c
 
 
 def createOwner(name):
-    owner = GoPhishing.Owner()
+    owner = models.Owner()
     owner.name = name
     return owner
 
 
 def createPhishingWebsite(url):
-    website = GoPhishing.PhishingWebsite()
+    website = models.PhishingWebsite()
     website.url = url
     return website
 
 
 def createTargetWebsite(url):
-    website = GoPhishing.TargetWebsite()
+    website = models.TargetWebsite()
     website.url = url
     return website
 
 
 def createPhishingTrip(company, poc, owner):
-    trip = GoPhishing.PhishingTrip()
-    trip.company = GoPhish.filterCompany(company, poc)
-    trip.owner = GoPhish.filterOwner(owner)
+    trip = models.PhishingTrip()
+    trip.company = filterCompany(company, poc)
+    trip.owner = filterOwner(owner)
     return trip
 
 
 def createPhishingTripInstance(trip, pond, target, time):
-    tripInstance = GoPhishing()
+    tripInstance = models.PhishingTripInstance()
     tripInstance.id = uuid.uuid4()
     tripInstance.trip = trip
     tripInstance.pond = pond

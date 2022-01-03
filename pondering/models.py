@@ -86,6 +86,11 @@ class TargetWebsite(models.Model):
         return self.url
 
 
+class CompanyProfile(models.Model):
+    """Model for storing information related to the target company."""
+    liname = models.CharField(max_length=200, help_text='The registered company name with LinkedIn.')
+
+
 class PhishingTrip(models.Model):
     """Model for scheduling phishing trips."""
     company = models.ForeignKey('company', on_delete=models.RESTRICT, null=True, help_text='Company contracting the social engineering campaign from GoVanguard.')
@@ -117,7 +122,6 @@ class TargetEmailAddress(models.Model):
 class PhishingList(models.Model):
     """Model for collecting a list of target e-mail addresses."""
     phishingList = models.ForeignKey('targetemailaddress', on_delete=models.RESTRICT, null=True, help_text='List of potential e-mail addresses.')
-
 
 
 class PhishingEmail(models.Model):
