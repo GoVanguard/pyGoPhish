@@ -29,7 +29,9 @@ def getPhishingContext(context):
 def postPhishingContext(request, context):
     """Phishing context handler."""
     domainForm = DomainScheduler(request.POST, request.FILES)
+    print('post successful')
     if domainForm.is_valid():
+        print('form valid')
         logging.info("The data provided by {0} to the domain scheduler is valid.".format(getClientIp(request)))
         data = domainForm.cleaned_data
         trip = filterPhishingTrip(data['company'], data['poc'], data['owner'])
@@ -41,6 +43,7 @@ def postPhishingContext(request, context):
         context.update(data)
         return context
     else:
+        print('form invalid')
         logging.warning('Client has deliberately circumvented JavaScript input filtering.')
         logging.warning('Client is attempting an injection attack from: {0}'.format(getClientIp(request)))
         return context

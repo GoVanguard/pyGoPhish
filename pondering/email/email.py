@@ -49,7 +49,7 @@ def getEmailContext(request, context):
             context['phishingTrip'] = instance
         else:
             logging.warning('Client is attempting parameter fuzzing.')
-        return context
+    return context
 
 
 def postEmailContext(request, context):

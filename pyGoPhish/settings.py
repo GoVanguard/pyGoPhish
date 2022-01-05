@@ -74,7 +74,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'PyGoPhish.urls'
+ROOT_URLCONF = 'pyGoPhish.urls'
 
 TEMPLATES = [
     {
@@ -102,7 +102,7 @@ MICROSOFT_AUTH_CLIENT_ID = os.environ.get("MICROSOFT_AUTH_CLIENT_ID")
 MICROSOFT_AUTH_CLIENT_SECRET = os.environ.get("MICROSOFT_AUTH_CLIENT_SECRET")
 MICROSOFT_AUTH_LOGIN_TYPE = 'ma'
 
-WSGI_APPLICATION = 'PyGoPhish.wsgi.application'
+WSGI_APPLICATION = 'pyGoPhish.wsgi.application'
 
 
 # Database

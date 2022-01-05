@@ -25,9 +25,9 @@ from pondering.LiIn2User import linkedin2username
 
 # PyGoPhish imports
 from pondering import models 
+from pondering import authhelper 
 from pondering.gophish import gophish 
 from pondering.email import email 
-from pondering import authhelper 
 from pondering.graphhelper import getUser
 from pondering.enumeration import enumeration
 
@@ -56,7 +56,7 @@ def home(request):
 
 def signIn(request):
     # Get the sign-in flow
-    flow = AuthHelper.getSignInFlow()
+    flow = authhelper.getSignInFlow()
     # Save the expected flow so we can use it in the callback
     try:
         request.session['auth_flow'] = flow
@@ -80,11 +80,14 @@ def emailSetup(request):
     phishingTrip = models.PhishingTripInstance()
     if request.method == 'GET':
         context = email.getEmailContext(request, context)
+        return render(request, 'pondering/email.html', context=context)
     if request.method == 'POST':
         context = email.postEmailContext(request, context)
-        pk = context['Instance']
-        return HttpResponseRedirect('enumerate?id={0}'.format(pk))
-    return render(request, 'pondering/email.html', context=context)
+        if 'Instance' in context.keys():
+            pk = context['Instance']
+            return HttpResponseRedirect('enumerate?id={0}'.format(pk))
+        else:
+            return HttpResponseRedirect('gophish')
 
 
 def emailTest(request):
@@ -111,7 +114,11 @@ def enumerate(request):
         return render(request, 'pondering/enumerate.html', context)
     if request.method == 'POST':
         context = enumeration.postEnumerationContext(request, context)
-        return render(request, 'pondering/enumerate.html', context) 
+        if 'domain' not in request.POST.keys():
+            context.update({'gophish': True})
+            return render(request, 'pondering/gophishing.html', context)
+        if context['LI2U']:
+            return render(request, 'pondering/linkedinresults.html', context) 
 
 
 def schedule(request):
@@ -121,11 +128,11 @@ def schedule(request):
 
 def callback(request):
     # Make the token request
-    result = AuthHelper.getTokenFromCode(request)
+    result = authhelper.getTokenFromCode(request)
     # Get the user's profile
     user = getUser(result['access_token'])
     # Store user
-    AuthHelper.storeUser(request, user)
+    authhelper.storeUser(request, user)
     return HttpResponseRedirect(reverse('home'))
 
 

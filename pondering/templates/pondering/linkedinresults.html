@@ -1,0 +1,7 @@
+{% if CompanyId %}
+    <p class='strong' id='name' name='name'>LinkedIn Company Alias: {{ company }}</p>
+    <p class='strong' id='id' name='id'>LinkedIn Company Id: {{ CompanyId }}</p>
+    <p class='strong' id='count' name='count'>LinkedIn Staff Count: {{ StaffCount }}</p>
+{% else %}
+    <p class='strong' id='error' name='error'>This business is not registered with this service or is hiding information from reconaissance.</p>
+{% endif %}
