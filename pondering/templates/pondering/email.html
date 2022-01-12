@@ -7,7 +7,7 @@
 <div class="jumbotron">
     {% if user.is_authenticated %}
         <p class="lead" id="userPrompt">Draft and test phishing campaign narratives here.</p>
-	<form action="/setup?={{ phishingTrip }}" id="form" method="post">
+	<form action="/setup?id={{ phishingTrip }}" id="form" method="post">
             {% csrf_token %}
             <div>
                 <div hidden>

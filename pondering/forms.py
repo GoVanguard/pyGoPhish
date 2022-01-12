@@ -12,7 +12,7 @@ class DomainScheduler(forms.Form):
     company = forms.CharField(label='company', max_length=32)
     poc = forms.CharField(label='poc', max_length=32)
     owner = forms.CharField(label='owner', max_length=32)
-    phishingwebsite = forms.URLField(label='phishingwebsite', max_length=2048)
+    phishingwebsite = forms.CharField(label='phishingwebsite', max_length=2048)
     targetwebsite = forms.URLField(label='targetwebsite', max_length=2048)
     targets = forms.FileField(label='targets', max_length=32, allow_empty_file=True, required=False)
     datetime = forms.DateTimeField(label='datetime')
@@ -207,11 +207,27 @@ class DomainNarrative(forms.Form):
 
 class CompanyProfile(forms.Form):
     """Form for filtering information related to the target company."""
-    company = forms.CharField(label='company', max_length=200)
+    instance = forms.UUIDField(label='instance')
+    company = forms.CharField(label='company', required=False, max_length=200)
+    exclusion = forms.CharField(label='exclusion', required=False, max_length=1017)
+
+    def clean_instance(self):
+        data = self.cleaned_data['instance']
+
+        # TODO: Write a method to check for and remove special characters and reduce white space.
+
+        return data
 
     def clean_company(self):
         data = self.cleaned_data['company']
         
+        # TODO: Write a method to check for and remove special characters and reduce white space.
+        
+        return data
+
+    def clean_exclusion(self):
+        data = self.cleaned_data['exclusion']
+
         # TODO: Write a method to check for and remove special characters and reduce white space.
         
         return data

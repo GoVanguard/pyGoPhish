@@ -72,14 +72,14 @@ def getTokenFromCode(request):
 def li2UserLogin():
     global creds
     if creds.session:
-        return creds.session
+        return creds
     else:
         creds = args()
         creds.username = settings['linkedin_username']
         creds.password = settings['linkedin_password']
         creds.proxy = False
         creds.session = linkedin2username.login(creds)
-        return creds.session
+        return creds
 
 
 def storeUser(request, user):

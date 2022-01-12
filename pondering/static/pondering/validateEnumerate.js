@@ -4,8 +4,10 @@ function lookup() {
     console.log('Lookup event triggered.');
     csrftoken = document.getElementsByName('csrfmiddlewaretoken')[0].value;
     let userInput = document.getElementById('company').value;
+    let instance = document.getElementById('instance').value;
     let formData = new FormData();
     formData.append('csrfmiddlewaretoken', csrftoken);
+    formData.append('instance', instance);
     formData.append('company', userInput);
     fetch(url, {
         method: 'POST',
@@ -28,8 +30,11 @@ function lookup() {
 function enumerate() {
     console.log('Enumerate event triggered.');
     let userInput = document.getElementById('company').value;
+    let instance = document.getElementById('instance').value;
+    let submit = document.getElementById('submit');
     let formData = new FormData();
     formData.append('csrfmiddlewaretoken', csrftoken);
+    formData.append('instance', instance); 
     formData.append('company', userInput);
     formData.append('accept', true);
     fetch(url, {
@@ -42,7 +47,42 @@ function enumerate() {
         data.then(result => {
             update = Utf8ArrayToStr(result.value);
             const view = document.getElementById('result').innerHTML = update;
-            updateEnumerationQuery();
+            submit.innerHTML = 'Save';
+            submit.className = 'btn btn-primary float-right';
+        });
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function deleteName(button) {
+    console.log('Delete name event triggered.');
+    button.className = 'btn btn-danger m-1';
+}
+
+function retainName(button) {
+    console.log('Delete name event refused.');
+    button.className = 'btn btn-success m-1';
+}
+
+function excludeName(button) {
+    console.log('Exclude name event triggered.');
+    let formData = new FormData();
+    let instance = document.getElementById('instance').value;
+    formData.append('csrfmiddlewaretoken', csrftoken);
+    formData.append('instance', instance)
+    formData.append('exclude', button.innerHTML);
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => {
+        const reader = response.body.getReader();
+        const data = reader.read();
+        data.then(result => {
+            update = Utf8ArrayToStr(result.value);
+            const view = document.getElementById('result').innerHTML = update;
         });
     })
     .catch(error => {
@@ -54,7 +94,7 @@ function Utf8ArrayToStr(array) {
     var out, i, len, c;
     var char2, char3;
 
-    out = "";
+    out = '';
     len = array.length;
     i = 0;
     while(i < len) {
@@ -81,13 +121,10 @@ function Utf8ArrayToStr(array) {
 }
 
 async function updateCompanyQuery() {
+    submit = document.getElementById('submit');
     while(!document.getElementById('name')) {
-        document.getElementById('submit').disabled = true;
-        await new Promise(r => setTimeout(r, 10));
+        submit.disabled = true;
+        await new Promise(r => setTimeout(r, 1000));
     }
-    document.getElementById('submit').disabled = false;
-}
-
-async function updateEnumerationQuery() {
-    console.log('Ready for enumeration result callback');
+    submit.disabled = false;
 }

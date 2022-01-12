@@ -110,16 +110,15 @@ def emailTest(request):
 def enumerate(request):
     context = initializeContext(request)
     if request.method == 'GET':
-        context = enumeration.getEnumerationContext(request, context) 
+        context = enumeration.getEnumerationContext(request, context)
         return render(request, 'pondering/enumerate.html', context)
     if request.method == 'POST':
-        context = enumeration.postEnumerationContext(request, context)
-        if 'domain' not in request.POST.keys():
-            context.update({'gophish': True})
-            return render(request, 'pondering/gophishing.html', context)
-        if context['LI2U']:
-            return render(request, 'pondering/linkedinresults.html', context) 
-
+        keys = request.POST.keys()
+        if 'include' in keys or 'exclude' in keys:
+            context = enumeration.deleteEnumerationContext(request, context)
+        else:
+            context = enumeration.postEnumerationContext(request, context)
+        return render(request, 'pondering/linkedinresults.html', context) 
 
 def schedule(request):
     context = initializeContext(request)
@@ -138,7 +137,7 @@ def callback(request):
 
 def signOut(request):
     # Delete the user and token
-    AuthHelper.removeUserAndToken(request)
+    authhelper.removeUserAndToken(request)
     # Return the user to the home page
     return HttpResponseRedirect(reverse('home'))
 

@@ -109,6 +109,7 @@ def filterEmailInstance(instance, service, enumeration, domain, efrom, to, subje
         result = phishingTrip.first()
         if result is not None:
             result.email = narrative
+            result.save()
 
 
 def filterEmailList(emailList):

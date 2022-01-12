@@ -41,7 +41,7 @@ class Company(models.Model):
 
     class Meta:
         ordering = ["name"]
-        verbose_name_plural = "companies"
+        verbose_name_plural = "Companies"
 
 
 class Owner(models.Model):
@@ -76,19 +76,32 @@ class PhishingWebsite(models.Model):
         """PhishingDomain object string."""
         return '<a href="{0}">{1}</a>'.format(self.url, self.hyperlink) 
 
+    class Meta:
+        verbose_name_plural = "Phishing Websites"
+
 
 class TargetWebsite(models.Model):
     """Model for the target website."""
     url = models.URLField(max_length=2048, help_text='The client website that actively hosts a Simple Mail Transfer Protocol (SMTP) service.')
-    
+
     def __str__(self):
         """Target object string."""
         return self.url
+
+    def __repr__(self):
+        """Target object string."""
+        return self.url
+
+    class Meta:
+        verbose_name_plural = "Target Websites"
 
 
 class CompanyProfile(models.Model):
     """Model for storing information related to the target company."""
     liname = models.CharField(max_length=200, help_text='The registered company name with LinkedIn.')
+
+    class Meta:
+        verbose_name_plural = "Company Profiles"
 
 
 class PhishingTrip(models.Model):
@@ -108,6 +121,34 @@ class PhishingTrip(models.Model):
         """Phishing trip object string."""
         return "{0}, {1}".format(self.company, self.owner)
 
+    class Meta:
+        verbose_name_plural = "Phishing Trips"
+
+
+class Name(models.Model):
+    """Model for storing names."""
+    text = models.CharField(max_length=1019)
+
+
+class NameList(models.Model):
+    """Model for storing a list of names."""
+    text = models.TextField()
+
+    class Meta:
+        verbose_name_plural = "Name Lists"
+
+
+class Exclusion(models.Model):
+    """Model for storing words that are not names."""
+    text = models.CharField(max_length=1019)
+
+
+class ExclusionList(models.Model):
+    """Model for storing a list of exclusions."""
+    text = models.CharField(max_length=1019)
+
+    class Meta:
+        verbose_name_plural = "Exclusion Lists"
 
 class TargetEmailAddress(models.Model):
     """Model for storing a target e-mail address."""
@@ -116,12 +157,18 @@ class TargetEmailAddress(models.Model):
 
     def getEmail(self):
         """Retrieves the target e-mail string."""
-        return self.email
+        return self.emails
+
+    class Meta:
+        verbose_name_plural = "Target Email Addresses"
 
 
 class PhishingList(models.Model):
     """Model for collecting a list of target e-mail addresses."""
     phishingList = models.ForeignKey('targetemailaddress', on_delete=models.RESTRICT, null=True, help_text='List of potential e-mail addresses.')
+
+    class Meta:
+        verbose_name_plural = "Phishing Lists"
 
 
 class PhishingEmail(models.Model):
@@ -161,14 +208,18 @@ class PhishingEmail(models.Model):
     keyword = models.CharField(max_length=20, null=True, blank=True, help_text='The template keyword used to substitute in the phishing domain.')
     body = models.CharField(max_length=10000, null=True, blank=True, help_text='The body of the phishing campaign e-mail.')
 
+    class Meta:
+        verbose_name_plural = "Phishing Emails"
+
 
 class PhishingTripInstance(models.Model):
     """Model representing a specific phishing trip event."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4(), help_text='Unique ID for this particular phishing trip.')
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, help_text='Unique ID for this particular phishing trip.')
     trip = models.ForeignKey('phishingtrip', on_delete=models.RESTRICT, null=True, help_text='Create a phishing trip, which may include multiple domains.')
     pond = models.OneToOneField(PhishingWebsite, on_delete=models.CASCADE, null=True, help_text='The phishing website.')
     target = models.OneToOneField(TargetWebsite, on_delete=models.CASCADE, null=True, help_text='The client website that actively hosts a Simple Mail Transfer Protocol (SMTP) service.')
     email = models.ForeignKey('phishingemail', on_delete=models.CASCADE, null=True, help_text='The phishing e-mail to be used during this campaign.')
+    nameList = models.OneToOneField('namelist', on_delete=models.RESTRICT, null=True, help_text='The list of names used to generate the phishing list.')
     pList = models.ForeignKey('phishinglist', on_delete=models.CASCADE, null=True, help_text='List of potential e-mail addresses.') 
     datetime = models.DateTimeField(max_length=20)
 
@@ -215,6 +266,7 @@ class PhishingTripInstance(models.Model):
     
     class Meta:
         ordering = ['datetime'] 
+        verbose_name_plural = "Phishing Trip Instances"
 
     def __str__(self):
         """String representing this instance."""
@@ -223,3 +275,6 @@ class PhishingTripInstance(models.Model):
     def getAbsoluteURL(self):
         """Returns the URL to access phishing trip details."""
         return 'settings/{0}'.format(self.id)
+
+    class Meta:
+        verbose_name_plural = "Phishing Trip Instances"

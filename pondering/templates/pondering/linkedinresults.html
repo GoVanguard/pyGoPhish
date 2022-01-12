@@ -1,7 +1,44 @@
 {% if CompanyId %}
-    <p class='strong' id='name' name='name'>LinkedIn Company Alias: {{ company }}</p>
-    <p class='strong' id='id' name='id'>LinkedIn Company Id: {{ CompanyId }}</p>
-    <p class='strong' id='count' name='count'>LinkedIn Staff Count: {{ StaffCount }}</p>
+    <p id='name' name='name'><strong>LinkedIn Company Alias:</strong> {{ Company }}</p>
+    <p id='id' name='id'><strong>LinkedIn Company Id:</strong> {{ CompanyId }}</p>
+    <p id='count' name='count'><strong>LinkedIn Staff Count:</strong> {{ StaffCount }}</p>
 {% else %}
-    <p class='strong' id='error' name='error'>This business is not registered with this service or is hiding information from reconaissance.</p>
+    <p class='strong' id='error' name='error'>This business is not registered with LinkedIn or is hiding information from reconaissance.</p>
+{% endif %}
+{% if Names %}
+    <p id='found' name='found'><strong>LinkedIn Staff Found:</strong> {{ StaffFound }}</p>
+    <p id='coverage' name='coverage'><strong>Percent Found:</strong> {{ Percentage }}%</p>
+    <div class="container">
+        <div class="row">
+            <h3 class="col-sm">Names:</h3>
+            <h3 class="col-sm">Exclusions:</h3>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                <ol>
+                    {% for name in Names %}
+                    <li>
+                        {% for text in name %}
+                            <button class="btn btn-success m-1" id="name-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}" onmouseover="deleteName(this)" onmouseout="retainName(this)" onclick="excludeName(this)">{{ text }}</button>
+                        {% endfor %}
+                    </li>
+                    {% endfor %}
+                </ol>
+            </div>
+	    {% if Exclusions %}
+            <div class="col-sm">
+                <ol>
+                    {% for text in Exclusions %}
+                    <li>
+                        {% for text in name %}
+                            <button class="btn" id="exclusion-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}">{{ text }}</button>
+                        {% endfor %}
+                        <button class='btn btn-danger' id='delete{{ forloop.counter0 }}' name='delete{{ forloop.counter0 }}'>Delete</button>
+                    </li>
+                    {% endfor %}
+                </ol>
+            </div>
+	    {% endif %}
+        </div>
+    </div>
 {% endif %}

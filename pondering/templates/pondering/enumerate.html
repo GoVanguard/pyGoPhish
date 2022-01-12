@@ -6,20 +6,28 @@
 {% block content %}
 <div class="jumbotron">
     {% if user.is_authenticated %}
-        {% if LI2U %}
+        {% if Enumeration == 'LI2U' %}
             <p class="lead" id="userPrompt">Search for companies registered with LinkedIn.</p>
         {% endif %}
             <div id="form" method="post">
                 {% csrf_token %}
                     <div>
-                        <strong>
-                            <label for="company">Company Name: </label>
-                        </strong>
-                        <input type="text" id="company" name="company" value="{{ company }}">
+                        <div hidden>
+                            <strong>
+                                <label for="instance">Instance: </label>
+                            </strong>
+                            <input type="text" id="instance" name="instance" value="{{ Instance }}">
+                        </div>
+                        <div>
+                            <strong>
+                                <label for="company">Company Name: </label>
+                            </strong>
+                            <input type="text" id="company" name="company" value="{{ Company }}">
+                        </div>
                         <div id='result'>
                         </div>        
                         <div>
-			<button class="btn btn-primary float-right" type="submit" id="submit" disabled>Accept</button>
+                        <button class="btn btn-success float-right" type="submit" id="submit" disabled>Accept</button>
                         </div>
                     </div>
             </div>
