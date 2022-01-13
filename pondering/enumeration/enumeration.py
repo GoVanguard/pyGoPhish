@@ -59,6 +59,7 @@ def postEnumerationContext(request, context):
         else:
             context = discoverLI2U(request, context)
         logging.info('Exiting pondering.enumerate.enumerate.postEnumerationContext at branch CompanyProfile.is_valid() is True')
+        print(context)
         return context
     else:
         if companyProfile.errors:
@@ -129,12 +130,13 @@ def refreshInstance(request, context):
                 domain = phishingTripInstance.target
                 dbList = phishingTripInstance.nameList.text
                 nameList = dbList.split('\n')
+                cleanList = filterNameList(nameList)
                 exclusions = getExclusions()
                 info = {'Instance': instance, 'Domain': domain, 'Enumeration': enumeration}
                 if nameList:
-                    info['Names'] = nameList
+                    info.update({'Names': cleanList})
                 if exclusions:
-                    info['Exclusions'] = exclusions
+                    info.update({'Exclusion': exclusions})
                 context.update(info)
                 logging.info('Exiting pondering.enumerate.enumerate.refreshInstance at branch models.PhishingTripInstance.objects.filter(pk).first() exists and returning context.')
             else:
@@ -180,10 +182,10 @@ def enumerateLI2U(request, context):
         linkedin2username.set_search_csrf(linkedInSession)
         companyId, staffCount = linkedin2username.get_company_info(company, linkedInSession)
         foundNames = linkedin2username.creds_scrape_info(linkedInSession, companyId, staffCount, creds)
-        cleanList = linkedin2username.clean(foundNames)
-        staffFound = len(cleanList)
-        nameList = filterNameList(phishingTripInstance, cleanList)
-        info = {'CompanyId': companyId, 'StaffCount': staffCount, 'Names': nameList, 'StaffFound': staffFound, 'Percentage': format((staffFound/staffCount)*100, '.2g')}
+        nameList = linkedin2username.clean(foundNames)
+        staffFound = len(nameList)
+        cleanList = filterNameList(phishingTripInstance, cleanList)
+        info = {'CompanyId': companyId, 'StaffCount': staffCount, 'Names': cleanList, 'StaffFound': staffFound, 'Percentage': format((staffFound/staffCount)*100, '.2g')}
         context.update(info)
         logging.info('Exiting pondering.enumerate.enumerate.enumerateLI2U at branch session is True and returning context.')
     else:
@@ -199,7 +201,7 @@ def addExclusion(request, context):
     if companyProfile.is_valid():
         logging.info('The data provided by {0} to the company profile is valid.'.format(getClientIp(request)))
         data = companyProfile.cleaned_data
-        exclusion = data['exclusion']
+        exclusion = data.get('exclusion', list())
         filterExclusion(text)
     else:
         if companyProfile.errors:
@@ -215,7 +217,7 @@ def addExclusion(request, context):
 def filterNameList(instance, cleanList):
     """Name list duplication filter."""
     logging.info('Entering pondering.enumerate.enumerate.filterNameList')
-    text = '\n'.join(cleanList) 
+    text = '\n'.join(cleanList)
     dbList = None
     try:
         dbList = models.NameList.objects.filter(text__iexact=text)
