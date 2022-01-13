@@ -118,6 +118,8 @@ def refreshInstance(request, context):
         temp = request.POST.get('instance')
     if UUID(temp, version=4):
         instance = temp
+    else:
+        HttpResponseRedirect('setup')
     if instance:
         phishingTripInstance = None
         try:
