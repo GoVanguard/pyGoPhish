@@ -1,11 +1,15 @@
 """PyGoPhish e-mail enumeration business logic."""
 # Built-in imports
+import os
 import logging
 import json
 from uuid import UUID
 
 # LinkedIn2Username imports
 from pondering.LiIn2User import linkedin2username
+
+# Django Q imports
+from django_q.tasks import async_task, result
 
 # Django framework imports
 from django.http import HttpResponseRedirect
@@ -19,6 +23,10 @@ from pondering.email import email
 from pondering.forms import CompanyProfile
 from pondering import authhelper
 from pondering import models
+
+
+linkedInLogin = authhelper.li2UserLogin()
+creds = result(linkedInLogin)
 
 
 def getEnumerationContext(request, context):
@@ -46,7 +54,7 @@ def postEnumerationContext(request, context):
         info = {'Company': liname}
         context.update(info)
         if liname and 'accept' in request.POST.keys():
-            context = enumerateLI2U(request, context)
+            context = enumerateLI2U(request, context) 
         else:
             context = discoverLI2U(request, context)
         logging.info('Exiting pondering.enumerate.enumerate.postEnumerationContext at branch CompanyProfile.is_valid() is True')
@@ -120,7 +128,7 @@ def refreshInstance(request, context):
                 domain = phishingTripInstance.target
                 dbList = phishingTripInstance.nameList.text
                 nameList = dbList.split('\n')
-                exclusions = getExclusions() 
+                exclusions = getExclusions()
                 info = {'Instance': instance, 'Domain': domain, 'Enumeration': enumeration}
                 if nameList:
                     info['Names'] = nameList
@@ -145,7 +153,6 @@ def discoverLI2U(request, context):
     """Method for discovering businesses registered with LinkedIn."""
     logging.info('Entering pondering.enumerate.enumerate.discoverLI2U')
     company = context['Company']
-    creds = authhelper.li2UserLogin()
     session = creds.session
     if session:
         session = linkedin2username.set_search_csrf(session)
