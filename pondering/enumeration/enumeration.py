@@ -179,7 +179,7 @@ def enumerateLI2U(request, context):
         logging.info('Entering pondering.enumerate.enumerate.enumerateLI2U at branch session is True.')
         linkedin2username.set_search_csrf(linkedInSession)
         companyId, staffCount = linkedin2username.get_company_info(company, linkedInSession)
-        foundNames = linkedin2username.scrape_info(linkedInSession, companyId, staffCount, creds)
+        foundNames = linkedin2username.creds_scrape_info(linkedInSession, companyId, staffCount, creds)
         cleanList = linkedin2username.clean(foundNames)
         staffFound = len(cleanList)
         nameList = filterNameList(phishingTripInstance, cleanList)

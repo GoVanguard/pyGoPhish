@@ -195,7 +195,7 @@ def check_li2u_version():
         return
 
 
-def loginCreds(creds):
+def login_creds(creds):
     """Creates a new authenticated session.
 
     Note that a mobile user agent is used. Parsing using the desktop results
@@ -503,6 +503,56 @@ def get_company_info(name, session):
     return(found_id[0], int(found_staff[0]))
 
 
+def creds_set_loops(staff_count, creds: dict):
+    """Defines total hits to the search API.
+
+    Sets a maximum amount of loops based on either the number of staff
+    discovered in the get_company_info function or the search depth argument
+    provided by the user. This limit is PER SEARCH, meaning it may be
+    exceeded if you use the geoblast or keyword feature.
+
+    Loops may stop early if no more matches are found or if a single search
+    exceeds LinkedIn's 1000 non-commercial use limit.
+
+    """
+
+    # We will look for 25 names on each loop. So, we set a maximum amount of
+    # loops to the amount of staff / 25 +1 more to catch remainders.
+    loops = int((staff_count / 25) + 1)
+
+    print(PC.ok_box + "Company has {} profiles to check. Some may be"
+                      " anonymous.".format(staff_count))
+
+    # The lines below attempt to detect large result sets and compare that
+    # with the command line arguments passed. The goal is to warn when you
+    # may not get all the results and to suggest ways to get  more.
+    if staff_count > 1000 and not creds.get('geoblast', False) and not creds.get('keywords', False):
+        print(PC.warn_box + "Note: LinkedIn limits us to a maximum of 1000"
+              " results!\n"
+              "    Try the --geoblast or --keywords parameter to bypass")
+    elif staff_count < 1000 and creds.get('geoblast', False):
+        print(PC.warn_box + "Geoblast is not necessary, as this company has"
+              " less than 1,000 staff. Disabling.")
+        args.geoblast = False
+    elif staff_count > 1000 and creds.get('geoblast', False):
+        print(PC.ok_box + "High staff count, geoblast is enabled. Let's rock.")
+    elif staff_count > 1000 and creds.get('keywords', False):
+        print(PC.ok_box + "High staff count, using keywords. Hope you picked"
+              " some good ones.")
+
+    # If the user purposely restricted the search depth, they probably know
+    # what they are doing, but we warn them just in case.
+    if creds.get('depth') and creds.get('depth') < loops:
+        print(PC.warn_box + "You defined a low custom search depth, so we"
+              " might not get them all.")
+    else:
+        print(PC.ok_box + "Setting each iteration to a maximum of {} loops of"
+              " 25 results each.".format(loops))
+        creds.update({'depth': loops})
+        print("\n\n")
+    return creds
+
+
 def set_loops(staff_count, args):
     """Defines total hits to the search API.
 
@@ -526,29 +576,29 @@ def set_loops(staff_count, args):
     # The lines below attempt to detect large result sets and compare that
     # with the command line arguments passed. The goal is to warn when you
     # may not get all the results and to suggest ways to get  more.
-    if staff_count > 1000 and not args.get('geoblast', False) and not args.get('keywords', False):
+    if staff_count > 1000 and not args.geoblast and not args.keywords:
         print(PC.warn_box + "Note: LinkedIn limits us to a maximum of 1000"
               " results!\n"
               "    Try the --geoblast or --keywords parameter to bypass")
-    elif staff_count < 1000 and args.get('geoblast', False):
+    elif staff_count < 1000 and args.geoblast:
         print(PC.warn_box + "Geoblast is not necessary, as this company has"
               " less than 1,000 staff. Disabling.")
         args.geoblast = False
-    elif staff_count > 1000 and args.get('geoblast', False):
+    elif staff_count > 1000 and args.geoblast:
         print(PC.ok_box + "High staff count, geoblast is enabled. Let's rock.")
-    elif staff_count > 1000 and args.get('keywords', False):
+    elif staff_count > 1000 and args.keywords:
         print(PC.ok_box + "High staff count, using keywords. Hope you picked"
               " some good ones.")
 
     # If the user purposely restricted the search depth, they probably know
     # what they are doing, but we warn them just in case.
-    if args.get('depth') and args.get('depth') < loops:
+    if args.depth and args.depth < loops:
         print(PC.warn_box + "You defined a low custom search depth, so we"
               " might not get them all.")
     else:
         print(PC.ok_box + "Setting each iteration to a maximum of {} loops of"
               " 25 results each.".format(loops))
-        args.get('depth') = loops
+        args.depth = loops
     print("\n\n")
     return args
 
@@ -586,7 +636,7 @@ def get_results(session, company_id, page, region, keyword):
     return result.text
 
 
-def credsScrapeInfo(session, company_id, staff_count, args):
+def creds_scrape_info(session, company_id, staff_count, creds):
     """Uses regexes to extract employee names.
 
     The data returned is similar to JSON, but not always formatted properly.
@@ -606,15 +656,15 @@ def credsScrapeInfo(session, company_id, staff_count, args):
     # We pass the full 'args' below as we need to define a few variables from
     # there - the loops as well as potentially disabling features that are
     # deemed unnecessary due to small result sets.
-    args = set_loops(staff_count, args)
+    creds = creds_set_loops(staff_count, creds)
 
     # If we are using geoblast or keywords, we need to define a numer of
     # "outer_loops". An outer loop will be a normal LinkedIn search, maxing
     # out at 1000 results.
-    if args.get('geoblast', False):
+    if creds.get('geoblast', False):
         outer_loops = range(0, len(GEO_REGIONS))
-    elif args.get('keywords', False):
-        outer_loops = range(0, len(args.get('keywords')))
+    elif creds.get('keywords', False):
+        outer_loops = range(0, len(creds.get('keywords')))
     else:
         outer_loops = range(0, 1)
 
@@ -622,14 +672,14 @@ def credsScrapeInfo(session, company_id, staff_count, args):
     # parameters are still being included but set to empty. You will see this
     # below with geoblast and keywords.
     for current_loop in outer_loops:
-        if args.get('geoblast', False):
+        if creds.get('geoblast', False):
             region_name = 'r' + str(current_loop)
             current_region = GEO_REGIONS[region_name]
             current_keyword = ''
             print("\n" + PC.ok_box + "Looping through region {}"
                   .format(current_region))
-        elif args.keywords:
-            current_keyword = args.keywords[current_loop]
+        elif creds.get('keywords', False):
+            current_keyword = creds.keywords[current_loop]
             current_region = ''
             print("\n" + PC.ok_box + "Looping through keyword {}"
                   .format(current_keyword))
@@ -638,7 +688,7 @@ def credsScrapeInfo(session, company_id, staff_count, args):
             current_keyword = ''
 
         ## This is the inner loop. It will search results 25 at a time.
-        for page in range(0, args.get('depth')):
+        for page in range(0, creds.get('depth')):
             new_names = 0
             sys.stdout.flush()
             sys.stdout.write(PC.ok_box + "Scraping results on loop "
@@ -678,7 +728,7 @@ def credsScrapeInfo(session, company_id, staff_count, args):
 
             # If the user has defined a sleep between loops, we take a little
             # nap here.
-            time.sleep(args.get('sleep'))
+            time.sleep(creds.get('sleep'))
 
     return full_name_list
 

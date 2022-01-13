@@ -63,7 +63,7 @@ def li2UserLogin(creds: dict):
         creds.update({'username': settings.get('linkedin_username')})
         creds.update({'password': settings.get('linkedin_password')})
         creds.update({'proxy': creds.get('proxy', False)})
-        creds.update({'session': linkedin2username.loginCreds(creds)})
+        creds.update({'session': linkedin2username.login_creds(creds)})
         return creds.get('session')
 
 
