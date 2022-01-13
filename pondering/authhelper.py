@@ -9,19 +9,6 @@ import requests
 from pondering.LiIn2User import linkedin2username
 
 
-class args:
-    session = None
-    username = ''
-    password = ''
-    company = ''
-    proxy = False
-    geoblast = False
-    depth = False
-    keywords = False
-    sleep = 0
-
-creds = args()
-
 # Load the oauthsettings.yml file
 stream = open('oauthsettings.yml', 'r')
 settings = yaml.load(stream, yaml.SafeLoader)
@@ -69,17 +56,15 @@ def getTokenFromCode(request):
     return result
 
 
-def li2UserLogin():
-    global creds
-    if creds.session:
-        return creds
+def li2UserLogin(creds: dict):
+    if creds.get('session'):
+        return creds.get('session')
     else:
-        creds = args()
-        creds.username = settings['linkedin_username']
-        creds.password = settings['linkedin_password']
-        creds.proxy = False
-        creds.session = linkedin2username.login(creds)
-        return creds
+        creds.update({'username': settings.get('linkedin_username')})
+        creds.update({'password': settings.get('linkedin_password')})
+        creds.update({'proxy': creds.get('proxy', False)})
+        creds.update({'session': linkedin2username.loginCreds(creds)})
+        return creds.get('session')
 
 
 def storeUser(request, user):

@@ -195,6 +195,124 @@ def check_li2u_version():
         return
 
 
+def loginCreds(creds):
+    """Creates a new authenticated session.
+
+    Note that a mobile user agent is used. Parsing using the desktop results
+    proved extremely difficult, as shared connections would be returned in
+    a manner that was indistinguishable from the desired targets.
+
+    The other header matters as well, otherwise advanced search functions
+    (region and keyword) will not work.
+
+    The function will check for common failure scenarios - the most common is
+    logging in from a new location. Accounts using multi-factor auth are not
+    yet supported and will produce an error.
+    """
+    session = requests.session()
+
+    # Special options below when using a proxy server. Helpful for debugging
+    # the application in Burp Suite.
+    if creds.get('proxy'):
+        print(PC.warn_box + "Using a proxy, ignoring SSL errors."
+              " Don't get pwned.")
+        session.verify = False
+        from requests.packages.urllib3.exceptions import InsecureRequestWarning
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+        session.proxies.update(args.proxy_dict)
+
+    # Our search and regex will work only with a mobile user agent and
+    # the correct REST protocol specified below.
+    mobile_agent = ('Mozilla/5.0 (Linux; U; Android 4.4.2; en-us; SCH-I535 '
+                    'Build/KOT49H) AppleWebKit/534.30 (KHTML, like Gecko) '
+                    'Version/4.0 Mobile Safari/534.30')
+    session.headers.update({'User-Agent': mobile_agent,
+                            'X-RestLi-Protocol-Version': '2.0.0'})
+
+    # We wll grab an anonymous response to look for the CSRF token, which
+    # is required for our logon attempt.
+    anon_response = session.get('https://www.linkedin.com/login')
+    login_csrf = re.findall(r'name="loginCsrfParam" value="(.*?)"',
+                            anon_response.text)
+    if login_csrf:
+        login_csrf = login_csrf[0]
+    else:
+        print("Having trouble loading login page... try the command again.")
+        sys.exit()
+
+    # Define the data we will POST for our login.
+    auth_payload = {
+        'session_key': creds.get('username'),
+        'session_password': creds.get('password'),
+        'isJsEnabled': 'false',
+        'loginCsrfParam': login_csrf
+        }
+
+    # Perform the actual login. We disable redirects as we will use that 302
+    # as an indicator of a successful logon.
+    response = session.post('https://www.linkedin.com/checkpoint/lg/login-submit'
+                            '?loginSubmitSource=GUEST_HOME',
+                            data=auth_payload, allow_redirects=False)
+
+    # Define a successful login by the 302 redirect to the 'feed' page. Try
+    # to detect some other common logon failures and alert the user.
+    if response.status_code == 302 or response.status_code == 303:
+        redirect = response.headers['Location']
+        if 'feed' in redirect:
+            print(PC.ok_box + "Successfully logged in.\n")
+            return session
+        if 'challenge' in redirect:
+            print(PC.warn_box + "LinkedIn doesn't like something about this"
+                  " login. Maybe you're being sneaky on a VPN or something."
+                  " You may get an email with a verification token. You can"
+                  " ignore the email. Log in from a web browser and try"
+                  " again.\n")
+            return False
+        if 'captcha' in redirect:
+            print(PC.warn_box + "You've triggered a CAPTCHA. Oops. Try logging"
+                  " in with your web browser first and come back later.")
+            return False
+        if 'add-phone' in redirect:
+            print(PC.warn_box + "LinkedIn is prompting to add your phone"
+                  " number to your profile. Please handle that in the web and"
+                  " then try again.")
+            return False
+        if 'manage-account' in redirect:
+            print(PC.warn_box + "LinkedIn has some account notification for you"
+                  " to check. Please log in first via the web and clear that.")
+            return False
+        if 'add-email' in redirect:
+            print(PC.warn_box + "LinkedIn wants you to add an email address to"
+                  " your account. Log in via the web first and do that.")
+            return False
+
+        # The below will detect some 302 that I don't yet know about.
+        print(PC.warn_box + "Some unknown redirection occurred. If this"
+              " persists, please open an issue on github wih the DEBUG"
+              " message below:\n")
+        print("DEBUG INFO:")
+        print("LOCATION: {}".format(redirect))
+        print("RESPONSE TEXT:\n{}".format(response.text))
+        return False
+
+    # A failed logon doesn't generate a 302 at all, but simply responds with
+    # the logon page. We detect this here.
+    if '<title>LinkedIn Login' in response.text:
+        print(PC.warn_box + "You've been returned to a login page. Check your"
+              " username and password and try again.\n")
+        return False
+
+    # If we make it past everything above, we have no idea what happened.
+    # Oh well, we fail.
+    print(PC.warn_box + "Some unknown error logging in. If this persists,"
+          "please open an issue on github.\n")
+    print("DEBUG INFO:")
+    print("RESPONSE CODE: {}".format(response.status_code))
+    print("RESPONSE TEXT:\n{}".format(response.text))
+    return False
+
+
+
 def login(args):
     """Creates a new authenticated session.
 
@@ -466,6 +584,104 @@ def get_results(session, company_id, page, region, keyword):
     # Perform the search for this iteration.
     result = session.get(url)
     return result.text
+
+
+def credsScrapeInfo(session, company_id, staff_count, args):
+    """Uses regexes to extract employee names.
+
+    The data returned is similar to JSON, but not always formatted properly.
+    The regex queries below will build individual lists of first and last
+    names. Every search tested returns an even number of each, so we can safely
+    match the two lists together to get full names.
+
+    Has the concept of inner an outer loops. Outerloops come into play when
+    using --keywords or --geoblast, both which attempt to bypass the 1,000
+    record search limit.
+
+    This function will stop searching if a loop returns 0 new names.
+    """
+    full_name_list = []
+    print(PC.ok_box + "Starting search....\n")
+
+    # We pass the full 'args' below as we need to define a few variables from
+    # there - the loops as well as potentially disabling features that are
+    # deemed unnecessary due to small result sets.
+    args = set_loops(staff_count, args)
+
+    # If we are using geoblast or keywords, we need to define a numer of
+    # "outer_loops". An outer loop will be a normal LinkedIn search, maxing
+    # out at 1000 results.
+    if args.get('geoblast', False):
+        outer_loops = range(0, len(GEO_REGIONS))
+    elif args.get('keywords', False):
+        outer_loops = range(0, len(args.get('keywords')))
+    else:
+        outer_loops = range(0, 1)
+
+    # Crafting the right URL is a bit tricky, so currently unnecessary
+    # parameters are still being included but set to empty. You will see this
+    # below with geoblast and keywords.
+    for current_loop in outer_loops:
+        if args.get('geoblast', False):
+            region_name = 'r' + str(current_loop)
+            current_region = GEO_REGIONS[region_name]
+            current_keyword = ''
+            print("\n" + PC.ok_box + "Looping through region {}"
+                  .format(current_region))
+        elif args.keywords:
+            current_keyword = args.keywords[current_loop]
+            current_region = ''
+            print("\n" + PC.ok_box + "Looping through keyword {}"
+                  .format(current_keyword))
+        else:
+            current_region = ''
+            current_keyword = ''
+
+        ## This is the inner loop. It will search results 25 at a time.
+        for page in range(0, args.depth):
+            new_names = 0
+            sys.stdout.flush()
+            sys.stdout.write(PC.ok_box + "Scraping results on loop "
+                             + str(page+1) + "...    ")
+            result = get_results(session, company_id, page, current_region,
+                                 current_keyword)
+            first_name = re.findall(r'"firstName":"(.*?)"', result)
+            last_name = re.findall(r'"lastName":"(.*?)"', result)
+
+            # Commercial Search Limit might be triggered
+            if "UPSELL_LIMIT" in result:
+                sys.stdout.write('\n')
+                print(PC.warn_box + "You've hit the commercial search limit!"
+                      " Try again on the 1st of the month. Sorry. :(")
+                break
+
+            # If the list of names is empty for a page, we assume that
+            # there are no more search results. Either you got them all or
+            # you are not connected enough to get them all.
+            if not first_name and not last_name:
+                sys.stdout.write('\n')
+                print(PC.ok_box + "We have hit the end of the road!"
+                      " Moving on...")
+                break
+
+            # re.findall puts all first names and all last names in a list.
+            # They are ordered, so the pairs should correspond with each other.
+            # We parse through them all here, and see which ones are new to us.
+            for first, last in zip(first_name, last_name):
+                full_name = first + ' ' + last
+                if full_name not in full_name_list:
+                    full_name_list.append(full_name)
+                    new_names += 1
+            sys.stdout.write("    " + PC.ok_box + "Added " + str(new_names) +
+                             " new names. Running total: "\
+                             + str(len(full_name_list)) + "              \r")
+
+            # If the user has defined a sleep between loops, we take a little
+            # nap here.
+            time.sleep(args.sleep)
+
+    return full_name_list
+
 
 
 def scrape_info(session, company_id, staff_count, args):

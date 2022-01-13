@@ -25,10 +25,10 @@ from pondering import authhelper
 from pondering import models
 
 
-linkedInLogin = async_task(authhelper.li2UserLogin())
-print(linkedInLogin)
-creds = result(linkedInLogin)
-
+creds = {'session': None, 'username': '', 'password': '', 'company': '', 'proxy': False, 'geoblast': False, 'depth': False, 'keywords': False, 'sleep': 0}
+linkedInLogin = async_task(authhelper.li2UserLogin, creds, sync=True)
+global linkedInSession
+linkedInSession = result(linkedInLogin, 200)
 
 def getEnumerationContext(request, context):
     """Method for GET requests to the enumerate view."""
@@ -153,11 +153,11 @@ def refreshInstance(request, context):
 def discoverLI2U(request, context):
     """Method for discovering businesses registered with LinkedIn."""
     logging.info('Entering pondering.enumerate.enumerate.discoverLI2U')
+    global linkedInSesssion
     company = context['Company']
-    session = creds.session
-    if session:
-        session = linkedin2username.set_search_csrf(session)
-        companyId, staffCount = linkedin2username.get_company_info(company, session)
+    if linkedInSession:
+        linkedin2username.set_search_csrf(linkedInSession)
+        companyId, staffCount = linkedin2username.get_company_info(company, linkedInSession)
         info = {'CompanyId': companyId, 'StaffCount': staffCount}
         context.update(info)
         logging.info('Exiting pondering.enumerate.enumerate.discoverLI2U at session is False and returning context.')
@@ -170,17 +170,16 @@ def discoverLI2U(request, context):
 def enumerateLI2U(request, context):
     """Method for enumerating employees registered with a business on LinkedIn."""
     logging.info('Entering pondering.enumerate.enumerate.enumerateLI2U')
+    global linkedInSession
     address = context['Domain']
     company = context['Company']
     instance = context['Instance']
     phishingTripInstance = getInstance(request, context)
-    creds = authhelper.li2UserLogin()
-    session = creds.session
-    if session:
+    if linkedInSession:
         logging.info('Entering pondering.enumerate.enumerate.enumerateLI2U at branch session is True.')
-        session = linkedin2username.set_search_csrf(session)
-        companyId, staffCount = linkedin2username.get_company_info(company, session)
-        foundNames = linkedin2username.scrape_info(session, companyId, staffCount, creds)
+        linkedin2username.set_search_csrf(linkedInSession)
+        companyId, staffCount = linkedin2username.get_company_info(company, linkedInSession)
+        foundNames = linkedin2username.scrape_info(linkedInSession, companyId, staffCount, creds)
         cleanList = linkedin2username.clean(foundNames)
         staffFound = len(cleanList)
         nameList = filterNameList(phishingTripInstance, cleanList)

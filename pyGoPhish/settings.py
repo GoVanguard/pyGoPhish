@@ -172,5 +172,5 @@ Q_CLUSTER = {
     'workers': 4,
     'retry': 120,
     'timeout': 90,
-    'django_redis': 'default'
+    'django_redis': 'default',
 }
