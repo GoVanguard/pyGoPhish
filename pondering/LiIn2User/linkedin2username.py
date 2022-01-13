@@ -526,29 +526,29 @@ def set_loops(staff_count, args):
     # The lines below attempt to detect large result sets and compare that
     # with the command line arguments passed. The goal is to warn when you
     # may not get all the results and to suggest ways to get  more.
-    if staff_count > 1000 and not args.geoblast and not args.keywords:
+    if staff_count > 1000 and not args.get('geoblast', False) and not args.get('keywords', False):
         print(PC.warn_box + "Note: LinkedIn limits us to a maximum of 1000"
               " results!\n"
               "    Try the --geoblast or --keywords parameter to bypass")
-    elif staff_count < 1000 and args.geoblast:
+    elif staff_count < 1000 and args.get('geoblast', False):
         print(PC.warn_box + "Geoblast is not necessary, as this company has"
               " less than 1,000 staff. Disabling.")
         args.geoblast = False
-    elif staff_count > 1000 and args.geoblast:
+    elif staff_count > 1000 and args.get('geoblast', False):
         print(PC.ok_box + "High staff count, geoblast is enabled. Let's rock.")
-    elif staff_count > 1000 and args.keywords:
+    elif staff_count > 1000 and args.get('keywords', False):
         print(PC.ok_box + "High staff count, using keywords. Hope you picked"
               " some good ones.")
 
     # If the user purposely restricted the search depth, they probably know
     # what they are doing, but we warn them just in case.
-    if args.depth and args.depth < loops:
+    if args.get('depth') and args.get('depth') < loops:
         print(PC.warn_box + "You defined a low custom search depth, so we"
               " might not get them all.")
     else:
         print(PC.ok_box + "Setting each iteration to a maximum of {} loops of"
               " 25 results each.".format(loops))
-        args.depth = loops
+        args.get('depth') = loops
     print("\n\n")
     return args
 
@@ -638,7 +638,7 @@ def credsScrapeInfo(session, company_id, staff_count, args):
             current_keyword = ''
 
         ## This is the inner loop. It will search results 25 at a time.
-        for page in range(0, args.depth):
+        for page in range(0, args.get('depth')):
             new_names = 0
             sys.stdout.flush()
             sys.stdout.write(PC.ok_box + "Scraping results on loop "
@@ -678,7 +678,7 @@ def credsScrapeInfo(session, company_id, staff_count, args):
 
             # If the user has defined a sleep between loops, we take a little
             # nap here.
-            time.sleep(args.sleep)
+            time.sleep(args.get('sleep'))
 
     return full_name_list
 

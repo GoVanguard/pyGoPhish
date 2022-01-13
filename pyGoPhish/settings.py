@@ -166,7 +166,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CLIENT_ID = 'e8ce316d-48d8-4c50-af08-4bb8fda3b23f'
 
-# example django-redis connection
+# Example django-redis connection
 Q_CLUSTER = {
     'name': 'DJRedis',
     'workers': 4,

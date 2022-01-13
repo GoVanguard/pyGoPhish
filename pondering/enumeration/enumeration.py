@@ -25,7 +25,7 @@ from pondering import authhelper
 from pondering import models
 
 
-creds = {'session': None, 'username': '', 'password': '', 'company': '', 'proxy': False, 'geoblast': False, 'depth': False, 'keywords': False, 'sleep': 0}
+creds = {'session': None, 'username': '', 'password': '', 'company': '', 'proxy': False, 'geoblast': False, 'depth': False, 'keywords': False, 'sleep': 0, 'depth': False}
 linkedInLogin = async_task(authhelper.li2UserLogin, creds, sync=True)
 global linkedInSession
 linkedInSession = result(linkedInLogin, 200)
