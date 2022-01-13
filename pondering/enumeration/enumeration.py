@@ -25,7 +25,8 @@ from pondering import authhelper
 from pondering import models
 
 
-linkedInLogin = authhelper.li2UserLogin()
+linkedInLogin = async_task(authhelper.li2UserLogin())
+print(linkedInLogin)
 creds = result(linkedInLogin)
 
 
