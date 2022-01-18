@@ -210,6 +210,7 @@ class CompanyProfile(forms.Form):
     instance = forms.UUIDField(label='instance')
     company = forms.CharField(label='company', required=False, max_length=200)
     exclusion = forms.CharField(label='exclusion', required=False, max_length=1017)
+    inclusion = forms.CharField(label='inclusion', required=False, max_length=1017)
 
     def clean_instance(self):
         data = self.cleaned_data['instance']

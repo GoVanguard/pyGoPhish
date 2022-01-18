@@ -114,7 +114,7 @@ def enumerate(request):
         return render(request, 'pondering/enumerate.html', context)
     if request.method == 'POST':
         keys = request.POST.keys()
-        if 'include' in keys or 'exclude' in keys:
+        if 'inclusion' in keys or 'exclusion' in keys:
             context = enumeration.deleteEnumerationContext(request, context)
         else:
             context = enumeration.postEnumerationContext(request, context)

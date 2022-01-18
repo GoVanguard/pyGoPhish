@@ -14,33 +14,46 @@ from os.path import exists
 from pathlib import Path
 from django.core.management.utils import get_random_secret_key
 
-ENV_VARS_FILE = 'setup.ini'
-ENV_SECRET_KEY = 'secret_key'
-SECRET_KEY = ''
-
-def setSecretKey():
-    if exists(ENV_VARS_FILE):
-        with open(ENV_VARS_FILE) as envVars:
-            for line in envVars:
-                if line.lower().startswith(ENV_SECRET_KEY.lower()):
-                    SECRET_KEY = line[len(ENV_SECRET_KEY)+1:]
-                    return SECRET_KEY
-                else:
-                    SECRET_KEY = get_random_secret_key()
-                    return(SECRET_KEY)
-    else:
-        SECRET_KEY = get_random_secret_key()
-        return SECRET_KEY
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+ENV_VARS_FILE = 'setup.cfg'
+ENV_SECRET_KEY = 'secret_key'
+SECRET_KEY = '' 
+
+def setSecretKey():
+    if exists(ENV_VARS_FILE):
+        try:
+            f = open(ENV_VARS_FILE, 'r+')
+        except PermissionError:
+            logging.error('Write access to the {0} file is not available to this user.'.format(ENV_VARS_FILE))
+        else:
+            lines = f.readlines()
+            for line in lines:
+                if line.lower().startswith(ENV_SECRET_KEY.lower()):
+                    SECRET_KEY = line[len(ENV_SECRET_KEY)+1:]
+                    return SECRET_KEY
+            SECRET_KEY = get_random_secret_key()
+            envVars.write('{0}={1}'.format(ENV_SECRET_KEY.upper(),SECRET_KEY))
+    else:
+        SECRET_KEY = get_random_secret_key()
+        try:
+            f = open(ENV_VARS_FILE, 'x')
+        except FileExistsError as exc:
+            logging.error("The configuration file was created during Django's initialization period.")
+        else:
+            f.write('{0}={1}'.format(ENV_SECRET_KEY.upper(),SECRET_KEY))
+        finally:
+            f.close()
+
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = setSecretKey()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = setSecretKey()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

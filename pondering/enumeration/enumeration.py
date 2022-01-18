@@ -59,7 +59,6 @@ def postEnumerationContext(request, context):
         else:
             context = discoverLI2U(request, context)
         logging.info('Exiting pondering.enumerate.enumerate.postEnumerationContext at branch CompanyProfile.is_valid() is True')
-        print(context)
         return context
     else:
         if companyProfile.errors:
@@ -73,11 +72,11 @@ def postEnumerationContext(request, context):
 def deleteEnumerationContext(request, context):
     """Method for DELETE requests to the enumerate view."""
     logging.info('Entering pondering.enumerate.enumerate.deleteEnumerationContext')
-    context = refreshInstance(request, context)
-    if 'exclude' in context.keys():
+    if 'exclusion' in request.POST.keys():
         context = addExclusion(request, context)
-    if 'include' in context.keys():
+    if 'inclusion' in request.POST.keys():
         context = removeExclusion(request, context)
+    context = refreshInstance(request, context)
     logging.info('Exiting pondering.enumerate.enumerate.deleteEnumerationContext')
     return context
 
@@ -113,13 +112,20 @@ def refreshInstance(request, context):
     instance = None
     temp = None 
     if request.method == 'GET':
-        temp = request.GET.get('id')
+        try:
+            temp = request.GET.get('id')
+        except:
+            logging.error('UUID string does not exist in the get request header.')
     if request.method == 'POST':
-        temp = request.POST.get('instance')
-    if UUID(temp, version=4):
-        instance = temp
-    else:
-        HttpResponseRedirect('setup')
+        try:
+            temp = request.POST.get('instance')
+        except:
+            logging.error('UUID string does not exist in the post request header.')
+    if temp:
+        if UUID(temp, version=4):
+            instance = temp
+        else:
+            return HttpResponseRedirect('setup')
     if instance:
         phishingTripInstance = None
         try:
@@ -131,16 +137,18 @@ def refreshInstance(request, context):
                 enumeration = phishingTripInstance.email.enumeration
                 domain = phishingTripInstance.target
                 dbList = phishingTripInstance.nameList.text
-                nameList = dbList.split('\n')
-                cleanList = filterNameList(nameList)
+                print('dbList')
+                print(dbList)
+                cleanList = filterNameList(phishingTripInstance, dbList)
                 exclusions = getExclusions()
                 info = {'Instance': instance, 'Domain': domain, 'Enumeration': enumeration}
-                if nameList:
+                if cleanList:
                     info.update({'Names': cleanList})
                 if exclusions:
-                    info.update({'Exclusion': exclusions})
+                    info.update({'Exclusions': exclusions})
                 context.update(info)
                 logging.info('Exiting pondering.enumerate.enumerate.refreshInstance at branch models.PhishingTripInstance.objects.filter(pk).first() exists and returning context.')
+                return context
             else:
                 logging.info('Exiting pondering.enumerate.enumerate.refreshInstance at branch models.PhishingTripInstance.objects.filter(pk).first() does not exist and returning context.')
                 logging.info('Redirecting user to the gophish view')
@@ -186,7 +194,7 @@ def enumerateLI2U(request, context):
         foundNames = linkedin2username.creds_scrape_info(linkedInSession, companyId, staffCount, creds)
         nameList = linkedin2username.clean(foundNames)
         staffFound = len(nameList)
-        cleanList = filterNameList(phishingTripInstance, cleanList)
+        cleanList = filterNameList(phishingTripInstance, nameList)
         info = {'CompanyId': companyId, 'StaffCount': staffCount, 'Names': cleanList, 'StaffFound': staffFound, 'Percentage': format((staffFound/staffCount)*100, '.2g')}
         context.update(info)
         logging.info('Exiting pondering.enumerate.enumerate.enumerateLI2U at branch session is True and returning context.')
@@ -199,11 +207,16 @@ def enumerateLI2U(request, context):
 def addExclusion(request, context):
     """Method for adding an exclusion, updating the context, and returning the view."""
     logging.info('Entering pondering.enumerate.enumerate.addExclusion')
-    companyProfile = companyProfile(request.POST)
+    companyProfile = CompanyProfile(request.POST)
     if companyProfile.is_valid():
         logging.info('The data provided by {0} to the company profile is valid.'.format(getClientIp(request)))
         data = companyProfile.cleaned_data
-        exclusion = data.get('exclusion', list())
+        liname = data['company']
+        info = {'Company': liname}
+        context.update(info)
+        context = discoverLI2U(request, context)
+        print(context)
+        text = data.get('exclusion', '')
         filterExclusion(text)
     else:
         if companyProfile.errors:
@@ -215,12 +228,58 @@ def addExclusion(request, context):
     return context
     
 
+def removeExclusion(request, context):
+    """Method for removing an exclusion, updating the context, and returning the view."""
+    logging.info('Entering pondering.enumerate.enumerate.removeExclusion')
+    companyProfile = CompanyProfile(request.POST)
+    if companyProfile.is_valid():
+        logging.info('The data provided by {0} to the company profile is valid.'.format(getClientIp(request)))
+        data = companyProfile.cleaned_data
+        liname = data['company']
+        info = {'Company': liname}
+        context.update(info)
+        context = discoverLI2U(request, context)
+        text = data.get('inclusion', '')
+        try:
+            exclusion = models.Exclusion.objects.filter(text__iexact=text)
+            exclusion.delete()
+        except FieldError as exc:
+            logging.error('No exclusions exist: {0}'.format(exc))
+    else:
+        if companyProfile.errors:
+            logging.error(companyProfile.errors)
+        logging.warning('Client has deliberately circumvented JavaScript input filtering.')
+        logging.warning('Client is attempting an injection attack from: {0}'.format(getClientIp(request)))
+        logging.info('Exiting pondering.enumerate.enumerate.addExclusion at branch CompanyProfile.is_valid() is False')
+    logging.info('Exiting pondering.enumerate.enumerate.addExclusion')
+    return context
+    
 
-def filterNameList(instance, cleanList):
+def formatNameList(dbList):
+    fullNames = dbList.split('\n')
+    seperateNames = []
+    for name in fullNames:
+        splitName = name.split()
+        seperateNames.append(splitName)
+    return seperateNames
+
+def formatNameList(dbList):
+    fullNames = dbList.split('\n')
+    seperateNames = []
+    for name in fullNames:
+        splitName = name.split()
+        seperateNames.append(splitName)
+    return seperateNames
+
+
+def filterNameList(instance, dbList):
     """Name list duplication filter."""
     logging.info('Entering pondering.enumerate.enumerate.filterNameList')
-    text = '\n'.join(cleanList)
-    dbList = None
+    text = ''
+    if type(dbList) == list:
+        text = '\n'.join(dbList)
+    else:
+        text = dbList
     try:
         dbList = models.NameList.objects.filter(text__iexact=text)
     except FieldError as exc:
@@ -236,18 +295,15 @@ def filterNameList(instance, cleanList):
         dbList.save()
         instance.nameList = dbList
         instance.save()
-        nameList = dbList.text.split('\n')
+        nameList = formatNameList(dbList.text)
         exclusions = getExclusions()
-        if not exclusions:
-            exclusions = ['']
-        for count, name in enumerate(nameList):
-            splitName = name.split()
-            for text in splitName:
-                if text in exclusions:
-                    splitName.remove(text)
-                else:
-                    filterName(text)
-            nameList[count] = splitName
+        if exclusions:
+            for count, name in enumerate(nameList):
+                for text in name:
+                    if text in exclusions:
+                        name.remove(text)
+                    else:
+                        filterName(text)
         return nameList
 
 
@@ -284,15 +340,15 @@ def filterExclusion(text):
     except FieldError as exc:
         logging.error('No exclusions exist: {0}'.format(exc))
         logging.info('Generating first exclusion: information redacted')
-        result = createExclusion(text)
+        exclusion = createExclusion(text)
     else:
         result = exclusion.first()
         if result:
-            return result
+            exclusion = result
         else:
-            result = createExclusion(text)
+            exclusion = createExclusion(text)
     finally:
-        result.save()
+        exclusion.save()
 
 
 def createNameList(text):
@@ -312,11 +368,10 @@ def createName(text):
 def createExclusion(text):
     """Method for creating a new exclusion instance."""
     logging.info('Entering pondering.enumerate.enumerate.createExclusion')
-    exclusion = models.Exclusions()
+    exclusion = models.Exclusion()
     exclusion.text = text
     exclusion.save()
-    exclusions = models.Exclusions.objects.get_all()
-    return exclusions
+    return exclusion
 
 
 def getExclusions():
@@ -324,12 +379,13 @@ def getExclusions():
     logging.info('Entering pondering.enumerate.enumerate.getExclusions')
     exclusions = None
     try:
-        exclusions = models.Exclusions.objects.get_all()
+        queryset = models.Exclusion.objects.all()
     except FieldError as exc:
         logging.error('No exclusions exist: {0}'.format(exc))
         logging.info('Generating a null value exclusion.')
         exclusions = createExclusion('')
     else:
+        exclusions = []
+        for query in queryset:
+            exclusions.append(query.text)
         return exclusions
-    finally:
-        return [] 

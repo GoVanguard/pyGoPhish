@@ -29,6 +29,7 @@ function lookup() {
 
 function enumerate() {
     console.log('Enumerate event triggered.');
+    let csrftoken = document.getElementsByName('csrfmiddlewaretoken')[0].value;
     let userInput = document.getElementById('company').value;
     let instance = document.getElementById('instance').value;
     let submit = document.getElementById('submit');
@@ -57,22 +58,49 @@ function enumerate() {
 }
 
 function deleteName(button) {
-    console.log('Delete name event triggered.');
     button.className = 'btn btn-danger m-1';
 }
 
 function retainName(button) {
-    console.log('Delete name event refused.');
     button.className = 'btn btn-success m-1';
+}
+
+function includeName(button) {
+    console.log('Include name event triggered.');
+    csrftoken = document.getElementsByName('csrfmiddlewaretoken')[0].value;
+    let formData = new FormData();
+    let instance = document.getElementById('instance').value;
+    let company = document.getElementById('company').value;
+    formData.append('csrfmiddlewaretoken', csrftoken);
+    formData.append('instance', instance);
+    formData.append('company', company);
+    formData.append('inclusion', button.innerHTML);
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => {
+        const reader = response.body.getReader();
+        const data = reader.read();
+        data.then(result => {
+            update = Utf8ArrayToStr(result.value);
+            const view = document.getElementById('result').innerHTML = update;
+        });
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
 }
 
 function excludeName(button) {
     console.log('Exclude name event triggered.');
     let formData = new FormData();
     let instance = document.getElementById('instance').value;
+    let company = document.getElementById('company').value;
     formData.append('csrfmiddlewaretoken', csrftoken);
-    formData.append('instance', instance)
-    formData.append('exclude', button.innerHTML);
+    formData.append('instance', instance);
+    formData.append('company', company);
+    formData.append('exclusion', button.innerHTML);
     fetch(url, {
         method: 'POST',
         body: formData,

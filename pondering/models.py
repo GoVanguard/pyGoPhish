@@ -142,10 +142,16 @@ class Exclusion(models.Model):
     """Model for storing words that are not names."""
     text = models.CharField(max_length=1019)
 
+    def __str__(self):
+        return self.text
+
+    def __repr__(self):
+        return self.text
+
 
 class ExclusionList(models.Model):
     """Model for storing a list of exclusions."""
-    text = models.CharField(max_length=1019)
+    text = models.TextField()
 
     class Meta:
         verbose_name_plural = "Exclusion Lists"

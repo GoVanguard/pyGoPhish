@@ -116,7 +116,7 @@ QSTemp/
 
 # Secrets protection
 oauthsettings.yml
-setup.ini
+setup.cfg
 
 # Artifacts
 *.swp
