@@ -41,27 +41,39 @@
             </div>
             <div>
                 <strong>
-                    <label for="efrom">From: </label>
-                </strong>
-                <input type="text" id="efrom" name="efrom" placeholder="jcreamer@osotnos.com" value="{{ efrom }}" required>
-            </div>
-            <div>
-                <strong>
                     <label for="to">Test E-mail Address: </label>
                 </strong>
                 <input type="text" id="to" name="to" placeholder="you@govanguard.com" value="{{ to }}" required>
             </div>
             <div>
                 <strong>
+                    <label for="cc">Cc E-mail Address: </label>
+                </strong>
+                <input type="text" id="cc" name="cc" placeholder="someone@example.com" value="{{ to }}" required>
+            </div>
+            <div>
+                <strong>
+                    <label for="efrom">From: </label>
+                </strong>
+                <input type="text" id="efrom" name="efrom" placeholder="someone@osotnos.com" value="{{ efrom }}" required>
+            </div>
+            <div>
+                <strong>
                     <label for="subject">Subject: </label>
                 </strong>
-                <input type="text" id="subject" name="subject" placeholder="test" value="{{ subject }}" required>
+                <input type="text" id="subject" name="subject" placeholder="Test" value="{{ subject }}" required>
             <div>
                 <strong>
                     <label for="keyword">Keyword: </label>
                 </strong>
-                <input type="text" id="keyword" name="keyword" placeholder="hyperlink" value="{{ keyword }}" required>
+                <input type="text" id="keyword" name="keyword" placeholder="Replaced with a hyperlink" value="{{ keyword }}" required>
             </div>
+	    <div>
+		<strong>
+		    <label for="attachment">Attachment: </label>
+		</strong>
+		<input type="file" id="attachment" name="attachment" placeholder="File">
+	    </div>
             <div>
                 <strong>
                     <label class="align-top" for="body">Body: </label>

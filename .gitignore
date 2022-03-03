@@ -117,6 +117,7 @@ QSTemp/
 # Secrets protection
 oauthsettings.yml
 setup.cfg
+aad.config.json
 
 # Artifacts
 *.swp

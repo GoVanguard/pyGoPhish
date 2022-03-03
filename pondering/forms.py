@@ -13,6 +13,7 @@ class DomainScheduler(forms.Form):
     poc = forms.CharField(label='poc', max_length=32)
     owner = forms.CharField(label='owner', max_length=32)
     phishingwebsite = forms.CharField(label='phishingwebsite', max_length=2048)
+    hyperlink = forms.CharField(label='hyperlink', max_length=4096)
     targetwebsite = forms.URLField(label='targetwebsite', max_length=2048)
     targets = forms.FileField(label='targets', max_length=32, allow_empty_file=True, required=False)
     datetime = forms.DateTimeField(label='datetime')
@@ -38,16 +39,20 @@ class DomainScheduler(forms.Form):
         return data
 
     def clean_phishingwebsite(self):
-        userInput = self.cleaned_data['phishingwebsite']
         data = self.cleaned_data['phishingwebsite']
-        return self.scrubURL(userInput, data)
+        return self.scrubURL(data)
 
 
     def clean_targetwebsite(self):
-        userInput = self.cleaned_data['targetwebsite']
         data = self.cleaned_data['targetwebsite']
-        return self.scrubURL(userInput, data)
+        return self.scrubURL(data)
 
+    def clean_targets(self):
+        targets = self.cleaned_data['targets']
+
+        # TODO: Write a method to check for and remove special characters and reduce white space.
+
+        return targets
 
     def clean_datetime(self):
         data = self.cleaned_data['datetime']
@@ -70,7 +75,7 @@ class DomainScheduler(forms.Form):
         return data
 
 
-    def scrubURL(self, userInput, data):
+    def scrubURL(self, data):
         # Check if user prepended information.
         temp = data.split('.')
 
@@ -93,25 +98,7 @@ class DomainScheduler(forms.Form):
         if 'www.' in temp:
             data = data[4:]
         
-        try:
-            # Check if the domain responds to a ping request.
-            response = requests.get(data)
-        except ConnectionError as err:
-            # Note if the destination or network connection are not reachable.
-            logging.error('The network connection to {0} timed out. Either the resource does not exist or the destination is not reachable (try again after verifying your url dns listing).'.format(data))
-        except gaierror as err:
-            # Note if we are too impatient with the request.
-            logging.error('Requests library did not await domain resolution.')
-        else: 
-            # Validate the URL
-            if response.status_code == 200 or 300 or 301 or 302 or 308:
-                # TODO: Handle redirects, update the url, and perform a recursive callback on the new destination.
-                pass
-            else:
-                logging.warning('User attempted entering the following URL: {0}'.format(user_input))
-                logging.warning('http://{0} is not listed or does not allow GET requests.'.format(user_input))
-        finally:
-            return data
+        return data
 
 class DomainNarrative(forms.Form):
     """Form for drafting phishing emails."""
@@ -142,11 +129,13 @@ class DomainNarrative(forms.Form):
         max_length=4,
     ) 
     phishingtrip = forms.UUIDField(label='id', required=True)
-    domain = forms.URLField(label='domain', required=False, max_length=2048)
-    efrom = forms.EmailField(label='efrom', max_length=320)
     to = forms.EmailField(label='to', max_length=320)
+    cc = forms.EmailField(label='cc', max_length=320)
+    efrom = forms.EmailField(label='efrom', max_length=320)
+    domain = forms.URLField(label='domain', required=False, max_length=2048)
     subject = forms.CharField(label='subject', max_length=998)
     keyword = forms.CharField(label='keyword', max_length=20)
+    attachment = forms.FileField(label='attachment', required=False)
     body = forms.CharField(label='body', max_length=10000)
 
     def clean_phishingTrip(self):
@@ -197,6 +186,13 @@ class DomainNarrative(forms.Form):
 
         return data
 
+    def clean_attachment(self):
+        data = self.cleaned_data['attachment']
+
+        # TODO: Write a method to check for and remove special characters and reduce white space.
+
+        return data
+
     def clean_body(self):
         data = self.cleaned_data['body']
 
@@ -207,7 +203,7 @@ class DomainNarrative(forms.Form):
 
 class CompanyProfile(forms.Form):
     """Form for filtering information related to the target company."""
-    instance = forms.UUIDField(label='instance')
+    instance = forms.UUIDField(label='instance', required=False)
     company = forms.CharField(label='company', required=False, max_length=200)
     exclusion = forms.CharField(label='exclusion', required=False, max_length=1017)
     inclusion = forms.CharField(label='inclusion', required=False, max_length=1017)

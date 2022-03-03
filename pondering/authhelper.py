@@ -28,13 +28,16 @@ def saveCache(request, cache):
 def getMSALApp(cache=None):
     # Initialize the MSAL confidential client
     authApp = msal.ConfidentialClientApplication(
-        settings['client_id'],
+        settings['app_id'],
         authority=settings['authority'],
-        client_credential=settings['client_secret'],
+        client_credential=settings['app_secret'],
         token_cache=cache
     )
     return authApp
 
+
+def getAssociation():
+    return settings['well-known']
 
 # Method to generate a sign-in flow
 def getSignInFlow():
@@ -88,7 +91,7 @@ def getToken(request):
             settings['scopes'],
             account=accounts[0]
         )
-        AuthHelper.saveCache(request, cache)
+        saveCache(request, cache)
     return result['access_token']
 
 

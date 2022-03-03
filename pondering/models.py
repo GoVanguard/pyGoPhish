@@ -212,6 +212,7 @@ class PhishingEmail(models.Model):
     to = models.EmailField(max_length=320, null=True, blank=True, help_text='The e-mail address you want to preview the e-mail in.')
     subject = models.CharField(max_length=998, null=True, blank=True, help_text='The subject for the phishing campaign e-mail.')
     keyword = models.CharField(max_length=20, null=True, blank=True, help_text='The template keyword used to substitute in the phishing domain.')
+    attachment = models.FileField(upload_to='uploads/%d %B %Y/', null=True)
     body = models.CharField(max_length=10000, null=True, blank=True, help_text='The body of the phishing campaign e-mail.')
 
     class Meta:

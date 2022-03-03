@@ -1,15 +1,20 @@
 """Business logic for creating a phishing campaign narrative."""
 # Built-in imports
 import logging
-import smtplib
 import requests
 import uuid
+import smtplib
+import json
+from email import message
 
 # SMTP lib error imports
 from smtplib import SMTPConnectError
 from smtplib import SMTPHeloError
 from smtplib import SMTPNotSupportedError
 from smtplib import SMTPDataError
+
+# Requests library imports
+import requests
 
 # Django framework imports
 from django.shortcuts import render
@@ -38,7 +43,7 @@ from pondering import models
 from pondering.logginghelper import getClientIp
 from pondering.forms import DomainNarrative
 from pondering import authhelper
-from pondering.graphhelper import sendMail, getMyMail
+from pondering.graphhelper import sendMail
 
 
 def getEmailContext(request, context):
@@ -62,14 +67,17 @@ def postEmailContext(request, context):
         service = data['service']
         enumeration = data['enumeration']
         domain = data['domain']
-        efrom = data['efrom']
         to = data['to']
+        cc = data['cc']
+        efrom = data['efrom']
         subject = data['subject']
         keyword = data['keyword']
+        attachment = data['attachment']
         body = data['body']
-        filterEmailInstance(instance, service, enumeration, domain, efrom, to, subject, keyword, body)
+        filterEmailInstance(instance, service, enumeration, domain, efrom, to, subject, keyword, attachment, body)
         update = {'Instance': instance, 'Service': service, 'Enumeration': enumeration, 'Domain': domain,
-                 'From': efrom, 'To': to, 'Subject': subject, 'Keyword': keyword, 'Body': body}
+                'From': efrom, 'To': to, 'Cc': cc, 'Subject': subject, 'Keyword': keyword, 'Attachment': attachment, 
+                'Body': body}
         context.update(update)
         return context
     else:
@@ -80,7 +88,7 @@ def postEmailContext(request, context):
         return context
 
 
-def filterEmailInstance(instance, service, enumeration, domain, efrom, to, subject, keyword, body):
+def filterEmailInstance(instance, service, enumeration, domain, efrom, to, subject, keyword, attachment, body):
     """Email narrative duplication filter."""
     narrative = None
     try:
@@ -88,11 +96,11 @@ def filterEmailInstance(instance, service, enumeration, domain, efrom, to, subje
     except FieldError as exc:
         logging.error('No email narratives exist: {0}'.format(exc))
         logging.info('Generating first phishing email narrative: {0},{1}'.format(efrom, subject))
-        narrative = createEmailInstance(service, enumeration, domain, efrom, to, subject, keyword, body)
+        narrative = createEmailInstance(service, enumeration, domain, efrom, to, subject, keyword, attachment, body)
     else:
         result = narrative.first()
         if result is None:
-            narrative = createEmailInstance(service, enumeration, domain, efrom, to, subject, keyword, body)
+            narrative = createEmailInstance(service, enumeration, domain, efrom, to, subject, keyword, attachment, body)
         else:
             narrative = result
     finally:
@@ -140,7 +148,7 @@ def createEmail(email):
     return target
 
 
-def createEmailInstance(service, enumeration, domain, efrom, to, subject, keyword, body):
+def createEmailInstance(service, enumeration, domain, efrom, to, subject, keyword, attachment, body):
     """This method creates a phishing narrative in the sqlite database."""
     narrative = models.PhishingEmail()
     narrative.service = service
@@ -151,6 +159,7 @@ def createEmailInstance(service, enumeration, domain, efrom, to, subject, keywor
     narrative.subject = subject
     narrative.keyword = keyword
     narrative.body = body
+    narrative.attachment = attachment
     return narrative
 
 
@@ -241,10 +250,20 @@ def emailSMTP(request, context):
                         logging.error(exc)
                         serverReport['To'] = 'Failed'
                         serverReport['To']['Error'] = exc
-                    # Attempt issuing a message body request to the mail exchange server
+                    # Attempt closing the session before creating a message
+                    try:
+                        # Store the quit response
+                        serverReport['Quit'] = smtp.quit()
+                    # Log and report a session that does not quit
+                    except SMTPException as exc:
+                        # Log and report the computer failing to quit an smtp session (highly unlikely)
+                        logging.error(exc)
+                        serverReport['Quit'] = 'Failed'
+                        serverReport['Quit']['Error'] = exc
+                    # Most people are going to want a modern e-mail format for their messages
                     try:
                         # Store the message body response
-                        serverReport['Body'] = smtp.data(body)
+                        serverReport['Body'] = smtp.data('\nSubject:{0}\nX-MSMail-Priority: High\nReturn-Receipt-To: {1}\n\n{2}'.format(subject, efrom, body))
                     except ValueError as exc:
                         logging.error(exc)
                         serverReport['Body']['Error'] = exc
@@ -272,6 +291,47 @@ def emailSMTP(request, context):
 
 def emailGRPH(request, context):
     """This method sends an email with Microsoft Graph."""
+    # Create an email object
+    # https://docs.microsoft.com/en-us/graph/api/user-sendmail?view=graph-rest-1.0&tabs=csharp
+    token = authhelper.getToken(request)
+    instance = context['Instance']
+    phishingTrip = models.PhishingTripInstance.objects.filter(id=instance)[0]
+    hyperlink = phishingTrip.pond.getHTMLURL()
+    efrom = context['From']
+    to = context['To']
+    cc = context['Cc']
+    subject = context['Subject']
+    keyword = context['Keyword']
+    attachement = context['Attachment']
+    body = context['Body']
+    user = context['user']
+    message = {
+        "message": {
+            "subject": subject,
+            "ccRecipients": [
+                {
+                    "emailAddress": {
+                        "address": cc
+                    }
+                }
+            ],
+            "isReadReceiptRequested": True,
+            "isDraft": True,
+            "toRecipients": [
+                {
+                    "emailAddress": {
+                        "address": to
+                    }
+                }
+            ],
+            "body": {
+                "contentType": "HTML",
+                "content": "<html>\r\n<head>\r\n<meta http-equiv=\"Content-Type\" content=\"text/html' charset=utf-8\">\r\n<meta content=\"text/html; charset=us-ascii\">\r\n</head>\r\n<body>\r\n{0}\r\n</body>\r\n</html>\r\n".format(body.replace(keyword, hyperlink)),
+            },
+        }
+    }
+    response = sendMail(token, json.dumps(message))
+    print(response)
     return context 
 
 

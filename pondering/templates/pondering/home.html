@@ -1,10 +1,10 @@
 {% extends "pondering/layout.html" %}
 {% block content %}
 <div class="jumbotron">
-  <h1>PyGoPhish - A Phishy Web Application</h1>
-  <p class="lead">PyGoPhish is a GoVanguard web application that automates phishing reconnaissance and message delivery. PyGoPhish assists the user with targeting a web domain, generating a list of e-mail addresses, developing an e-mail template, and delivering the custom e-mail to the selected domain. PyGoPhish was built using the Django Web Framework, Microsoft Graph, and Python. Many thanks go to Jason Johnston, who is a developer with the Microsoft Graph development team, for helping GoVanguard learn how to leverage Azure's native resources to automate our business logic. This application wouldn't be possible without his team's dedicated work creating the Microsoft Graph Developer Experience and its affiliated training repositories. <a href="https://github.com/microsoftgraph/msgraph-training-pythondjangoapp/blob/main/CONTRIBUTING.md">Johnston, Jason et al.</a></p>
+  <h1>pyGoPhish - A Phishy Web Application</h1>
+  <p class="lead">pyGoPhish is a GoVanguard web application that automates phishing reconnaissance and message delivery. pyGoPhish assists the user with targeting a web domain, generating a list of e-mail addresses, developing an e-mail template, and delivering the custom e-mail to the selected domain. pyGoPhish was built using the Django Web Framework, Microsoft Graph, and Python. Many thanks go to Jason Johnston, who is a developer with the Microsoft Graph development team, for helping GoVanguard learn how to leverage Azure's native resources to automate our business logic. This application wouldn't be possible without his team's dedicated work creating the Microsoft Graph Developer Experience and its affiliated training repositories. <a href="https://github.com/microsoftgraph/msgraph-training-pythondjangoapp/blob/main/CONTRIBUTING.md">Johnston, Jason et al.</a></p>
   {% if user.is_authenticated %}
-    <h4>Welcome {{ user.name }}!</h4>
+    <h4>Welcome {{ request.is_authenticated }}!</h4>
     <p>Use the navigation bar at the top of the page to get started.</p>
   {% else %}
     <a href="{% url 'signin' %}" class="btn btn-primary btn-large">Click here to sign in</a>

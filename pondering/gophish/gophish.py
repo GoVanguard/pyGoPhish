@@ -21,6 +21,7 @@ def getPhishingContext(context):
     context['owner'] = ''
     context['phishingwebsite'] = ''
     context['targetwebsite'] = ''
+    context['hyperlink'] = ''
     context['targets'] = None 
     context['datetime'] = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%dT%H:%M')
     return context
@@ -29,13 +30,11 @@ def getPhishingContext(context):
 def postPhishingContext(request, context):
     """Phishing context handler."""
     domainForm = DomainScheduler(request.POST, request.FILES)
-    print('post successful')
     if domainForm.is_valid():
-        print('form valid')
         logging.info("The data provided by {0} to the domain scheduler is valid.".format(getClientIp(request)))
         data = domainForm.cleaned_data
         trip = filterPhishingTrip(data['company'], data['poc'], data['owner'])
-        pond = filterPhishingWebsite(data['phishingwebsite'])
+        pond = filterPhishingWebsite(data['phishingwebsite'], data['hyperlink'])
         target = filterTargetWebsite(data['targetwebsite'])
         targets = data['targets']
         time = data['datetime']
@@ -43,20 +42,19 @@ def postPhishingContext(request, context):
         context.update(data)
         return context
     else:
-        print('form invalid')
         logging.warning('Client has deliberately circumvented JavaScript input filtering.')
         logging.warning('Client is attempting an injection attack from: {0}'.format(getClientIp(request)))
         return context
 
 
-def filterPhishingWebsite(url):
+def filterPhishingWebsite(url, hyperlink):
     """Phishing website duplication filter."""
     location = None
     try:
-        location = models.PhishingWebsite.objects.filter(url__iexact=url)
+        location = models.PhishingWebsite.objects.filter(url__iexact=url).filter(hyperlink_iexact=hyperlink)
     except FieldError as exc:
         logging.error('No phishing websites exist: {0}'.format(exc))
-        logging.info('Generating first phishing website: {0}'.format(url))
+        logging.info('Generating first phishing website: {0} with hyperlink {1}'.format(url, hyperlink))
         location = models.PhishingWebsite()
         location.url = url
     else:

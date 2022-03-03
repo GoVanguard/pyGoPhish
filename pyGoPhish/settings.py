@@ -15,6 +15,15 @@ from pathlib import Path
 from django.core.management.utils import get_random_secret_key
 
 
+"""Production applications must verify
+that HTTP traffic is encrypted using >TLSv1.
+Otherwise, enumerated emails will be 
+harvestable during employee interaction
+with this web application. Additional
+vulnerabilities may exist in this web
+application."""
+# SECURE_SSL_REDIRECT = True
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -58,7 +67,7 @@ SECRET_KEY = setSecretKey()
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['django-call-graph.azurewebsites.net','localhost', '127.0.0.1']
 
 SITE_ID = 2
 
@@ -74,8 +83,8 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'rest_framework',
     'microsoft_auth',
-    'django_q',
     'pondering',
+    'django_q',
 ]
 
 MIDDLEWARE = [
@@ -183,7 +192,14 @@ CLIENT_ID = 'e8ce316d-48d8-4c50-af08-4bb8fda3b23f'
 Q_CLUSTER = {
     'name': 'DJRedis',
     'workers': 4,
-    'retry': 120,
     'timeout': 90,
-    'django_redis': 'default',
+    'django_redis': 'default'
 }
+
+# MSAL ms_identity_web middleware configs
+from ms_identity_web.configuration import AADConfig
+from ms_identity_web import IdentityWebPython
+AAD_CONFIG = AADConfig.parse_json(file_path='aad.config.json')
+MS_IDENTITY_WEB = IdentityWebPython(AAD_CONFIG)
+ERROR_TEMPLATE = 'auth/{}.html' # for rendering 401 or other errors from msal_middleware
+MIDDLEWARE.append('ms_identity_web.django.middleware.MsalMiddleware')

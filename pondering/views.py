@@ -4,18 +4,26 @@ import logging
 import uuid
 import time
 import pprint
+import json
+import requests
 from dateutil import tz, parser
 from smtplib import SMTP
 from smtplib import SMTPException
 from smtplib import SMTPConnectError
 
 # Django Web Application Framework imports
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render, redirect
 from django.views import generic
+from django.views.generic.edit import CreateView
+from pyGoPhish.settings import ALLOWED_HOSTS
 from rest_framework.decorators import api_view
+
+# Authentication imports
+ms_identity_web = settings.MS_IDENTITY_WEB
 
 # Dnspython imports
 from dns import resolver
@@ -32,27 +40,32 @@ from pondering.graphhelper import getUser
 from pondering.enumeration import enumeration
 
 
-def root(request):
-    # Redirect clients accessing the service from a non-standard path.
-    return redirect('http://localhost:8000/home')
-
-
 def initializeContext(request):
     context = {}
+
     # Check for any errors in the session
     error = request.session.pop('flash_error', None)
+
     if error != None:
         context['errors'] = []
         context['errors'].append(error)
+
     # Check for user in the session
     context['user'] = request.session.get('user', {'is_authenticated': False})
     return context
 
+def root(request):
+    # Redirect clients accessing the service from a non-standard path
+    scheme = request.scheme
+    host = request.META['HTTP_HOST']
+    if host in ALLOWED_HOSTS:
+        return redirect('{0}s://{1}/home'.format(scheme, host))
+    else:
+        return redirect('http://localhost:8000/home')
 
 def home(request):
     context = initializeContext(request)
     return render(request, 'pondering/home.html', context)
-
 
 def signIn(request):
     # Get the sign-in flow
@@ -65,6 +78,12 @@ def signIn(request):
     # Redirect to the Azure sign-in page
     return HttpResponseRedirect(flow['auth_uri'])
 
+def callback(request):
+    # Make the token request
+    result = getTokenFromCode(request)
+    # Temporary! Save the response in an error so it's displayed
+    request.session['flash_error'] = { 'message': 'Token retrieved', 'debug': format(result) }
+    return HttpResponseRedirect(reverse('home'))
 
 def goPhish(request):
     context = initializeContext(request)
@@ -73,7 +92,6 @@ def goPhish(request):
         context = gophish.postPhishingContext(request, context)
         return HttpResponseRedirect(reverse('schedule'))
     return render(request, 'pondering/gophish.html', context=context)
-
 
 def emailSetup(request):
     context = initializeContext(request)
@@ -89,22 +107,20 @@ def emailSetup(request):
         else:
             return HttpResponseRedirect('gophish')
 
-
 def emailTest(request):
     context = initializeContext(request)
     if request.method == 'POST':
-        context = Email.postEmailContext(request, context)
+        context = email.postEmailContext(request, context)
         service = context['Service']
         if service == 'SMTP':
-            context = Email.emailSMTP(request, context)
+            context = email.emailSMTP(request, context)
             return render(request, 'pondering/test.html', context=context)
         if service == 'GRPH':
-            context = Email.emailGRPH(request, context)
+            context = email.emailGRPH(request, context)
             return render(request, 'pondering/test.html', context=context)
         if service == 'O365':
             context = Email.emailO365(request, context)
             return render(request, 'pondering/test.html', context=context)
-
 
 @api_view(['GET','POST'])
 def enumerate(request):
@@ -124,7 +140,6 @@ def schedule(request):
     context = initializeContext(request)
     return render(request, 'pondering/schedule.html', context=context)
 
-
 def callback(request):
     # Make the token request
     result = authhelper.getTokenFromCode(request)
@@ -134,13 +149,11 @@ def callback(request):
     authhelper.storeUser(request, user)
     return HttpResponseRedirect(reverse('home'))
 
-
 def signOut(request):
     # Delete the user and token
     authhelper.removeUserAndToken(request)
     # Return the user to the home page
     return HttpResponseRedirect(reverse('home'))
-
 
 class PhishingListView(generic.ListView):
     # Set the model for the generic.ListView object template
@@ -154,7 +167,6 @@ class PhishingListView(generic.ListView):
        """Abstract template function that populates the list based on the specified phishing trip."""
        # Return a list of the emails associated with a Phishing Trip Instance
        return models.PhishingList.objects.all() 
-
 
 class PhishingTripListView(generic.ListView):
     # Set the model for the generic.ListView object template
@@ -191,8 +203,7 @@ class PhishingTripListView(generic.ListView):
         # Return a list of Phishing Trip Instances
         return models.PhishingTripInstance.objects.all()
 
-
-class PhishingTripDetailView(generic.DetailView):
+class PhishingTripDetailView(CreateView):
     model = models.PhishingTripInstance 
 
     def get_context_data(self, *, object_list=None, **kwargs):
@@ -220,4 +231,3 @@ class PhishingTripDetailView(generic.DetailView):
         context.update(kwargs)
         context.update(initializeContext(self.request))
         return super().get_context_data(**context)
-

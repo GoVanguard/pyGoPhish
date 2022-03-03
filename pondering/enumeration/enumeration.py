@@ -9,7 +9,7 @@ from uuid import UUID
 from pondering.LiIn2User import linkedin2username
 
 # Django Q imports
-from django_q.tasks import async_task, result
+#from django_q.tasks import async_task, result
 
 # Django framework imports
 from django.http import HttpResponseRedirect
@@ -25,10 +25,10 @@ from pondering import authhelper
 from pondering import models
 
 
-creds = {'session': None, 'username': '', 'password': '', 'company': '', 'proxy': False, 'geoblast': False, 'depth': False, 'keywords': False, 'sleep': 0, 'depth': False}
-linkedInLogin = async_task(authhelper.li2UserLogin, creds, sync=True)
-global linkedInSession
-linkedInSession = result(linkedInLogin, 200)
+#creds = {'session': None, 'username': '', 'password': '', 'company': '', 'proxy': False, 'geoblast': False, 'depth': False, 'keywords': False, 'sleep': 0, 'depth': False}
+#linkedInLogin = async_task(authhelper.li2UserLogin, creds, sync=True)
+#global linkedInSession
+#linkedInSession = result(linkedInLogin, 200)
 
 def getEnumerationContext(request, context):
     """Method for GET requests to the enumerate view."""
@@ -55,7 +55,7 @@ def postEnumerationContext(request, context):
         info = {'Company': liname}
         context.update(info)
         if liname and 'accept' in request.POST.keys():
-            context = enumerateLI2U(request, context) 
+            context = asyn_task(enumerateLI2U(request, context))
         else:
             context = discoverLI2U(request, context)
         logging.info('Exiting pondering.enumerate.enumerate.postEnumerationContext at branch CompanyProfile.is_valid() is True')
@@ -124,42 +124,32 @@ def refreshInstance(request, context):
     if temp:
         if UUID(temp, version=4):
             instance = temp
-        else:
-            return HttpResponseRedirect('setup')
-    if instance:
-        phishingTripInstance = None
-        try:
-            phishingTripInstance = models.PhishingTripInstance.objects.filter(pk=instance).first()
-        except FieldError as exc:
-            logging.error('No phishing trip instances exist.')
-        else:
-            if phishingTripInstance:
-                enumeration = phishingTripInstance.email.enumeration
-                domain = phishingTripInstance.target
-                dbList = phishingTripInstance.nameList.text
-                print('dbList')
-                print(dbList)
-                cleanList = filterNameList(phishingTripInstance, dbList)
-                exclusions = getExclusions()
-                info = {'Instance': instance, 'Domain': domain, 'Enumeration': enumeration}
-                if cleanList:
-                    info.update({'Names': cleanList})
-                if exclusions:
-                    info.update({'Exclusions': exclusions})
-                context.update(info)
-                logging.info('Exiting pondering.enumerate.enumerate.refreshInstance at branch models.PhishingTripInstance.objects.filter(pk).first() exists and returning context.')
-                return context
-            else:
-                logging.info('Exiting pondering.enumerate.enumerate.refreshInstance at branch models.PhishingTripInstance.objects.filter(pk).first() does not exist and returning context.')
-                logging.info('Redirecting user to the gophish view')
-                return HttpResponseRedirect('gophish')
-        finally:
-            return context
+    phishingTripInstance = None
+    try:
+        phishingTripInstance = models.PhishingTripInstance.objects.filter(pk=instance).first()
+    except FieldError as exc:
+        logging.error('No phishing trip instances exist.')
     else:
-        logging.info('Exiting pondering.enumerate.enumerate.refreshInstance at branch models.PhishingTripInstance.objects.filter(pk).first() does not exist and returning context.')
-        logging.info('Redirecting user to the gophish view')
-        return HttpResponseRedirect('gophish')
-
+        if phishingTripInstance:
+            enumeration = phishingTripInstance.email.enumeration
+            domain = phishingTripInstance.target
+            dbList = phishingTripInstance.nameList.text
+            cleanList = filterNameList(phishingTripInstance, dbList)
+            exclusions = getExclusions()
+            info = {'Instance': instance, 'Domain': domain, 'Enumeration': enumeration}
+            if cleanList:
+                info.update({'Names': cleanList})
+            if exclusions:
+                info.update({'Exclusions': exclusions})
+            context.update(info)
+            logging.info('Exiting pondering.enumerate.enumerate.refreshInstance at branch models.PhishingTripInstance.objects.filter(pk).first() exists and returning context.')
+            return context
+        else:
+            logging.info('Exiting pondering.enumerate.enumerate.refreshInstance at branch models.PhishingTripInstance.objects.filter(pk).first() does not exist and returning context.')
+            logging.info('Redirecting user to the gophish view')
+            return HttpResponseRedirect('gophish')
+    finally:
+        return context
 
 
 def discoverLI2U(request, context):
